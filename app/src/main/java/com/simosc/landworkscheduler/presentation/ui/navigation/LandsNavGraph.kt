@@ -1,9 +1,12 @@
 package com.simosc.landworkscheduler.presentation.ui.navigation
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -17,14 +20,16 @@ import com.simosc.landworkscheduler.presentation.ui.screens.editorland.LandEdito
 import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandNoteEditorScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandNoteEditorViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuScreen
+import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuViewModel
+import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuScreen
+import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuStates
+import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewStates
-import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuScreen
-import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuViewModel
-import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
 
 fun NavGraphBuilder.landsNavGraph(navController: NavController) {
     navigation(
@@ -37,6 +42,17 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
         ){
             val viewModel = hiltViewModel<LandsMenuViewModel>()
             val uiState by viewModel.uiState.collectAsState()
+            val ctx = LocalContext.current
+            val createFileLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.CreateDocument("application/vnd.google-earth.kml+xml")
+            ){ newFileUri ->
+                if(newFileUri != null) {
+                    ctx.contentResolver.openOutputStream(newFileUri)?.use { outputStream ->
+                        outputStream.write(viewModel.getLandsKmlString().toByteArray())
+                    }
+                }
+                viewModel.changeToNormalState()
+            }
 
             LandsMenuScreen(
                 uiState = uiState,
@@ -44,10 +60,29 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                     navController.popBackStack()
                 },
                 onLandPress = { land ->
-                    navController.navigate("land_preview/${land.id}")
+                    if(uiState is LandsMenuStates.MultiSelectLands){
+                        viewModel.toggleLand(land)
+                    }else{
+                        navController.navigate("land_preview/${land.id}")
+                    }
                 },
                 onNewLandPress = {
                     navController.navigate("land_editor")
+                },
+                onChangeToNormalState = {
+                    viewModel.changeToNormalState()
+                },
+                onChangeToDeleteState = {
+                    viewModel.changeToDeleteLandsState()
+                },
+                onChangeToExportState = {
+                    viewModel.changeToExportLandsState()
+                },
+                onDeleteSelectedLands = {
+                    viewModel.executeLandsDelete()
+                },
+                onExportSelectedLands = {
+                    viewModel.createFileToExport(createFileLauncher)
                 }
             )
             LaunchedEffect(Unit){

@@ -1,18 +1,22 @@
 package com.simosc.landworkscheduler.presentation.ui.screens.menulands
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -57,36 +62,96 @@ fun LandsMenuScreen(
     onBackPress: () -> Unit = {},
     onLandPress: (Land) -> Unit = {},
     onNewLandPress: () -> Unit = {},
+    onChangeToNormalState: () -> Unit = {},
+    onChangeToDeleteState: () -> Unit = {},
+    onChangeToExportState: () -> Unit = {},
+    onDeleteSelectedLands: () -> Unit = {},
+    onExportSelectedLands: () -> Unit = {},
 ) {
+    BackHandler(uiState is LandsMenuStates.MultiSelectLands){
+        onChangeToNormalState()
+    }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
+                        modifier = Modifier.fillMaxWidth(),
                         text = "My Lands",
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = onBackPress
+                        onClick = {
+                            if(uiState is LandsMenuStates.MultiSelectLands)
+                                onChangeToNormalState()
+                            else
+                                onBackPress()
+                        }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = if(uiState is LandsMenuStates.MultiSelectLands)
+                                    Icons.Rounded.Close
+                                else
+                                    Icons.Rounded.ArrowBack,
                             contentDescription = "Navigate Back Button"
                         )
                     }
                 },
                 actions = {
-                    if (uiState !is LandsMenuStates.Loading) {
-                        IconButton(
-                            onClick = onNewLandPress
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Add,
-                                contentDescription = "Create New Land",
-                            )
+                    when(uiState){
+                        is LandsMenuStates.Loaded -> {
+                            if(uiState.lands.isNotEmpty()) {
+                                IconButton(
+                                    onClick = onChangeToExportState
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Share,
+                                        contentDescription = "Export Lands",
+                                    )
+                                }
+                                IconButton(
+                                    onClick = onChangeToDeleteState
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Delete,
+                                        contentDescription = "Delete Lands",
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = onNewLandPress
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = "Create New Land",
+                                )
+                            }
                         }
+                        is LandsMenuStates.ExportLands -> {
+                            IconButton(
+                                onClick = onExportSelectedLands
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Share,
+                                    contentDescription = "Export Selected Lands",
+                                )
+                            }
+                        }
+                        is LandsMenuStates.DeleteLands -> {
+                            IconButton(
+                                onClick = onDeleteSelectedLands
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = "Delete Selected Lands",
+                                )
+                            }
+                        }
+                        else -> {}
                     }
                 }
             )
@@ -99,53 +164,66 @@ fun LandsMenuScreen(
                     .padding(padding)
             ) {
                 when (uiState) {
-                    is LandsMenuStates.Loaded -> {
-                        if (uiState.lands.isEmpty()) {
-                            Text(
-                                text = "Add new land",
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .wrapContentSize()
-                            )
-                        } else {
-                            val mapUiSettings = remember {
-                                MapUiSettings(
-                                    compassEnabled = false,
-                                    indoorLevelPickerEnabled = false,
-                                    mapToolbarEnabled = false,
-                                    myLocationButtonEnabled = false,
-                                    rotationGesturesEnabled = false,
-                                    scrollGesturesEnabled = false,
-                                    scrollGesturesEnabledDuringRotateOrZoom = false,
-                                    tiltGesturesEnabled = false,
-                                    zoomControlsEnabled = false,
-                                    zoomGesturesEnabled = false
-                                )
+                    is LandsMenuStates.Loading -> {
+                        LoadingContentComponent()
+                    }
+                    is LandsMenuStates.Loaded,
+                    is LandsMenuStates.MultiSelectLands-> {
+                        val lands = remember(uiState){
+                            when (uiState) {
+                                is LandsMenuStates.Loaded -> uiState.lands
+                                is LandsMenuStates.MultiSelectLands -> uiState.lands
+                                else -> emptyList()
                             }
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize()
-                            ) {
+                        }
+                        val mapUiSettings = remember {
+                            MapUiSettings(
+                                compassEnabled = false,
+                                indoorLevelPickerEnabled = false,
+                                mapToolbarEnabled = false,
+                                myLocationButtonEnabled = false,
+                                rotationGesturesEnabled = false,
+                                scrollGesturesEnabled = false,
+                                scrollGesturesEnabledDuringRotateOrZoom = false,
+                                tiltGesturesEnabled = false,
+                                zoomControlsEnabled = false,
+                                zoomGesturesEnabled = false
+                            )
+                        }
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            if (lands.isEmpty()) {
+                                item {
+                                    Text(
+                                        text = "Add new land",
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier
+                                            .fillParentMaxSize()
+                                            .wrapContentHeight()
+                                    )
+                                }
+                            }else{
                                 items(
-                                    items = uiState.lands,
+                                    items = lands,
                                     key = { it.id }
                                 ) { land ->
-                                    val isLast = uiState.lands.lastOrNull() != land
+                                    val isLast = lands.lastOrNull() != land
                                     LandItem(
                                         land = land,
                                         showDivider = isLast,
+                                        showCheckBox = uiState is LandsMenuStates.MultiSelectLands,
+                                        isChecked = if(uiState is LandsMenuStates.MultiSelectLands)
+                                                        uiState.selectedLands.contains(land)
+                                                    else
+                                                        false,
                                         coroutineScope = scope,
                                         mapUiSettings = mapUiSettings,
                                         onLandClick = onLandPress
                                     )
                                 }
                             }
-
                         }
-                    }
-
-                    LandsMenuStates.Loading -> {
-                        LoadingContentComponent()
                     }
                 }
             }
@@ -157,6 +235,8 @@ fun LandsMenuScreen(
 private fun LandItem(
     land: Land,
     showDivider: Boolean,
+    showCheckBox: Boolean,
+    isChecked: Boolean,
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     mapUiSettings: MapUiSettings = MapUiSettings(
         compassEnabled = false,
@@ -249,10 +329,17 @@ private fun LandItem(
                 }
             },
             trailingContent = {
-                Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowRight,
-                    contentDescription = null
-                )
+                if(showCheckBox){
+                    Checkbox(
+                        checked = isChecked,
+                        onCheckedChange = { onLandClick(land) }
+                    )
+                }else{
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowRight,
+                        contentDescription = null
+                    )
+                }
             },
         )
     }
@@ -287,22 +374,71 @@ private fun PreviewLandsMenuScreenLoadedEmpty(){
 @Composable
 @Preview( showSystemUi = true, showBackground = true )
 private fun PreviewLandsMenuScreenLoaded(){
+    val mockLands = List(10){ index ->
+        Land.emptyLand().copy(
+            id = index + 1L,
+            title = "mock land ${index + 1}",
+            border = listOf(
+                LatLng(0.0,0.0),
+                LatLng(1.0,0.0),
+                LatLng(1.0,1.0),
+                LatLng(0.0,1.0),
+                LatLng(0.0,0.0),
+            ),
+            holes = emptyList()
+        )
+    }
     LandsMenuScreen(
         uiState = LandsMenuStates.Loaded(
-            lands = List(10){ index ->
-                Land.emptyLand().copy(
-                    id = index + 1L,
-                    title = "mock land ${index + 1}",
-                    border = listOf(
-                        LatLng(0.0,0.0),
-                        LatLng(1.0,0.0),
-                        LatLng(1.0,1.0),
-                        LatLng(0.0,1.0),
-                        LatLng(0.0,0.0),
-                    ),
-                    holes = emptyList()
-                )
-            }
+            lands = mockLands
+        )
+    )
+}
+
+@Composable
+@Preview( showSystemUi = true, showBackground = true )
+private fun PreviewLandsMenuScreenExport(){
+    val mockLands = List(10){ index ->
+        Land.emptyLand().copy(
+            id = index + 1L,
+            title = "mock land ${index + 1}",
+            border = listOf(
+                LatLng(0.0,0.0),
+                LatLng(1.0,0.0),
+                LatLng(1.0,1.0),
+                LatLng(0.0,1.0),
+                LatLng(0.0,0.0),
+            ),
+            holes = emptyList()
+        )
+    }
+    LandsMenuScreen(
+        uiState = LandsMenuStates.ExportLands(
+            lands = mockLands
+        )
+    )
+}
+
+@Composable
+@Preview( showSystemUi = true, showBackground = true )
+private fun PreviewLandsMenuScreenDelete(){
+    val mockLands = List(10){ index ->
+        Land.emptyLand().copy(
+            id = index + 1L,
+            title = "mock land ${index + 1}",
+            border = listOf(
+                LatLng(0.0,0.0),
+                LatLng(1.0,0.0),
+                LatLng(1.0,1.0),
+                LatLng(0.0,1.0),
+                LatLng(0.0,0.0),
+            ),
+            holes = emptyList()
+        )
+    }
+    LandsMenuScreen(
+        uiState = LandsMenuStates.DeleteLands(
+            lands = mockLands
         )
     )
 }

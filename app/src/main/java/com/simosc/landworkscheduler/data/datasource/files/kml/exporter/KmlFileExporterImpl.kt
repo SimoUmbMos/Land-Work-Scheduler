@@ -5,29 +5,34 @@ import com.google.android.gms.maps.model.LatLng
 import com.simosc.landworkscheduler.core.config.DefaultMapItemFillAlpha
 import com.simosc.landworkscheduler.core.config.DefaultMapItemStrokeAlpha
 import com.simosc.landworkscheduler.data.datasource.files.kml.entities.KmlPolygonPlacemark
+import com.simosc.landworkscheduler.data.datasource.files.kml.typeconverters.toKmlPolygonPlacemark
 import com.simosc.landworkscheduler.domain.extension.toArgbString
+import com.simosc.landworkscheduler.domain.files.KmlFileExporter
+import com.simosc.landworkscheduler.domain.model.Land
 
-object KmlFileExporter {
+class KmlFileExporterImpl : KmlFileExporter {
 
-    fun generateKmlString(placemark: KmlPolygonPlacemark): String{
-        placemark.let{ polygon ->
-            if(polygon.outerBoundary.isEmpty())  return ""
+    override fun generateKmlString(land: Land): String{
+        land.toKmlPolygonPlacemark().let{ polygon ->
             return StringBuilder().apply{
                 append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                 append("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
                 append("  <Document>\n")
-                append(polygon.generateKmlStyleString())
-                append(polygon.generateKmlPlacemarkString())
+                if(polygon.outerBoundary.isNotEmpty()){
+                    append(polygon.generateKmlStyleString())
+                    append(polygon.generateKmlPlacemarkString())
+                }
                 append("  </Document>\n")
                 append("</kml>")
             }.toString()
         }
     }
 
-    fun generateKmlString(placemarks: List<KmlPolygonPlacemark>): String{
-        placemarks.filter { it.outerBoundary.isNotEmpty() }.let{ polygons ->
-            if(polygons.isEmpty())  return ""
-            return StringBuilder().apply{
+    override fun generateKmlString(lands: List<Land>): String{
+        List(lands.size){
+            lands[it].toKmlPolygonPlacemark()
+        }.filter { it.outerBoundary.isNotEmpty() }.let{ polygons ->
+            return StringBuilder().apply {
                 append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                 append("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
                 append("  <Document>\n")
