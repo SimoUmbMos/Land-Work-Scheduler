@@ -21,6 +21,7 @@ import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandN
 import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandNoteEditorViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuViewModel
+import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuActions
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuStates
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuViewModel
@@ -40,9 +41,14 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
         composable(
             route = "lands_menu"
         ){
+            val ctx = LocalContext.current
+
             val viewModel = hiltViewModel<LandsMenuViewModel>()
             val uiState by viewModel.uiState.collectAsState()
-            val ctx = LocalContext.current
+            val searchQuery by viewModel.searchQuery.collectAsState()
+            val isLoadingAction by viewModel.isLoadingAction.collectAsState()
+            val isSearching by viewModel.isSearching.collectAsState()
+
             val createFileLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.CreateDocument("application/vnd.google-earth.kml+xml")
             ){ newFileUri ->
@@ -51,11 +57,14 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                         outputStream.write(viewModel.getLandsKmlString().toByteArray())
                     }
                 }
-                viewModel.changeToNormalState()
+                viewModel.changeAction(LandsMenuActions.None)
             }
 
             LandsMenuScreen(
                 uiState = uiState,
+                searchQuery = searchQuery,
+                isSearching = isSearching,
+                isLoadingAction = isLoadingAction,
                 onBackPress = {
                     navController.popBackStack()
                 },
@@ -69,14 +78,11 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 onNewLandPress = {
                     navController.navigate("land_editor")
                 },
-                onChangeToNormalState = {
-                    viewModel.changeToNormalState()
+                onSearchChange = {
+                    viewModel.onSearchChange(it)
                 },
-                onChangeToDeleteState = {
-                    viewModel.changeToDeleteLandsState()
-                },
-                onChangeToExportState = {
-                    viewModel.changeToExportLandsState()
+                onActionChange = {
+                    viewModel.changeAction(it)
                 },
                 onDeleteSelectedLands = {
                     viewModel.executeLandsDelete()

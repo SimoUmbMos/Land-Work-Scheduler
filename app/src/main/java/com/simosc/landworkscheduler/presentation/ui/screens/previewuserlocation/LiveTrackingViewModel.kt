@@ -109,7 +109,7 @@ class LiveTrackingViewModel @Inject constructor(
         else
             currentUiState
     }.stateIn(
-        CoroutineScope(Dispatchers.IO),
+        viewModelScope,
         SharingStarted.WhileSubscribed(5000L),
         LiveTrackingStates.LoadingState
     )

@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
@@ -26,6 +28,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,6 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,105 +61,60 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LandsMenuScreen(
     uiState: LandsMenuStates,
+    searchQuery: String = "",
+    isSearching: Boolean = false,
+    isLoadingAction: Boolean = false,
     onBackPress: () -> Unit = {},
     onLandPress: (Land) -> Unit = {},
     onNewLandPress: () -> Unit = {},
-    onChangeToNormalState: () -> Unit = {},
-    onChangeToDeleteState: () -> Unit = {},
-    onChangeToExportState: () -> Unit = {},
+    onSearchChange: (String) -> Unit = {},
+    onActionChange: (LandsMenuActions) -> Unit = {},
     onDeleteSelectedLands: () -> Unit = {},
     onExportSelectedLands: () -> Unit = {},
+    initSearchAppBarOpen: Boolean = false,
 ) {
+    var isSearchAppBarOpen by remember(initSearchAppBarOpen){
+        mutableStateOf(initSearchAppBarOpen)
+    }
+    BackHandler(isSearchAppBarOpen){
+        isSearchAppBarOpen = false
+    }
+    BackHandler(searchQuery.isNotBlank()){
+        onSearchChange("")
+    }
     BackHandler(uiState is LandsMenuStates.MultiSelectLands){
-        onChangeToNormalState()
+        onActionChange(LandsMenuActions.None)
     }
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = "My Lands",
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            if(uiState is LandsMenuStates.MultiSelectLands)
-                                onChangeToNormalState()
-                            else
-                                onBackPress()
-                        }
-                    ) {
-                        Icon(
-                            imageVector = if(uiState is LandsMenuStates.MultiSelectLands)
-                                    Icons.Rounded.Close
-                                else
-                                    Icons.Rounded.ArrowBack,
-                            contentDescription = "Navigate Back Button"
-                        )
+            LandMenuTopBar(
+                uiState = uiState,
+                isSearchAppBarOpen = isSearchAppBarOpen,
+                searchQuery = searchQuery,
+                onSearchChange = onSearchChange,
+                onSearchAppBarChange = { isSearchAppBarOpen = it},
+                onBackPress = {
+                    when{
+                        isSearchAppBarOpen ->
+                            isSearchAppBarOpen = false
+
+                        searchQuery.isNotBlank() ->
+                            onSearchChange("")
+
+                        uiState is LandsMenuStates.MultiSelectLands ->
+                            onActionChange(LandsMenuActions.None)
+
+                        else ->
+                            onBackPress()
                     }
                 },
-                actions = {
-                    when(uiState){
-                        is LandsMenuStates.Loaded -> {
-                            if(uiState.lands.isNotEmpty()) {
-                                IconButton(
-                                    onClick = onChangeToExportState
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Share,
-                                        contentDescription = "Export Lands",
-                                    )
-                                }
-                                IconButton(
-                                    onClick = onChangeToDeleteState
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Delete,
-                                        contentDescription = "Delete Lands",
-                                    )
-                                }
-                            }
-                            IconButton(
-                                onClick = onNewLandPress
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Add,
-                                    contentDescription = "Create New Land",
-                                )
-                            }
-                        }
-                        is LandsMenuStates.ExportLands -> {
-                            IconButton(
-                                onClick = onExportSelectedLands
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Share,
-                                    contentDescription = "Export Selected Lands",
-                                )
-                            }
-                        }
-                        is LandsMenuStates.DeleteLands -> {
-                            IconButton(
-                                onClick = onDeleteSelectedLands
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Delete,
-                                    contentDescription = "Delete Selected Lands",
-                                )
-                            }
-                        }
-                        else -> {}
-                    }
-                }
+                onNewLandPress = onNewLandPress,
+                onActionChange = onActionChange,
+                onExportSelectedLands = onExportSelectedLands,
+                onDeleteSelectedLands = onDeleteSelectedLands,
             )
         },
         content = { padding ->
@@ -196,7 +157,10 @@ fun LandsMenuScreen(
                             if (lands.isEmpty()) {
                                 item {
                                     Text(
-                                        text = "Add new land",
+                                        text = if(searchQuery.isNotBlank())
+                                            "Can't find result's"
+                                        else
+                                            "Add new land",
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier
                                             .fillParentMaxSize()
@@ -226,9 +190,318 @@ fun LandsMenuScreen(
                         }
                     }
                 }
+                if(isSearching || isLoadingAction){
+                    //TODO: Loading dialog
+                }
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LandMenuTopBar(
+    uiState: LandsMenuStates,
+    searchQuery: String,
+    isSearchAppBarOpen: Boolean,
+    onBackPress: () -> Unit,
+    onNewLandPress: () -> Unit,
+    onSearchChange: (String) -> Unit,
+    onSearchAppBarChange: (Boolean) -> Unit,
+    onActionChange: (LandsMenuActions) -> Unit,
+    onDeleteSelectedLands: () -> Unit,
+    onExportSelectedLands: () -> Unit,
+){
+    when{
+        isSearchAppBarOpen -> {
+            TextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 8.dp,
+                        vertical = 4.dp,
+                    ),
+                value = searchQuery,
+                onValueChange = onSearchChange,
+                placeholder = {
+                    Text(text = "Search...")
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        onSearchAppBarChange(false)
+                    }
+                ),
+                leadingIcon = {
+                    IconButton(
+                        onClick = {
+                            if(searchQuery.isNotBlank())
+                                onSearchChange("")
+                            else
+                                onSearchAppBarChange(false)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Clear / Close Search"
+                        )
+                    }
+                },
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            onSearchAppBarChange(false)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = "Search"
+                        )
+                    }
+                },
+                shape = RoundedCornerShape(32.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedTextColor =
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+                    unfocusedTextColor =
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+
+                    focusedContainerColor =
+                    MaterialTheme.colorScheme.primaryContainer,
+                    unfocusedContainerColor =
+                    MaterialTheme.colorScheme.primaryContainer,
+
+                    focusedIndicatorColor =
+                    Color.Transparent,
+                    unfocusedIndicatorColor =
+                    Color.Transparent,
+
+                    focusedLeadingIconColor =
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+                    unfocusedLeadingIconColor =
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+
+                    focusedTrailingIconColor =
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+                    unfocusedTrailingIconColor =
+                    MaterialTheme.colorScheme.onPrimaryContainer,
+
+                    focusedPlaceholderColor =
+                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                    unfocusedPlaceholderColor =
+                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                )
+            )
+        }
+
+        searchQuery.isNotBlank() -> {
+            TopAppBar(
+                title = {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "Search: $searchQuery",
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onBackPress
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = "Navigate Back Button"
+                        )
+                    }
+                },
+                actions = {
+                    when(uiState){
+                        is LandsMenuStates.Loaded -> {
+                            IconButton(
+                                onClick = { onSearchAppBarChange(true) }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Search,
+                                    contentDescription = "Search",
+                                )
+                            }
+                            if(uiState.lands.isNotEmpty()) {
+                                IconButton(
+                                    onClick = { onActionChange(LandsMenuActions.Export) }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Share,
+                                        contentDescription = "Export Lands",
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { onActionChange(LandsMenuActions.Delete) }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Delete,
+                                        contentDescription = "Delete Lands",
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = onNewLandPress
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = "Create New Land",
+                                )
+                            }
+                        }
+                        is LandsMenuStates.ExportLands -> {
+                            IconButton(
+                                onClick = { onSearchAppBarChange(true) }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Search,
+                                    contentDescription = "Search",
+                                )
+                            }
+                            IconButton(
+                                onClick = onExportSelectedLands
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Share,
+                                    contentDescription = "Export Selected Lands",
+                                )
+                            }
+                        }
+                        is LandsMenuStates.DeleteLands -> {
+                            IconButton(
+                                onClick = { onSearchAppBarChange(true) }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Search,
+                                    contentDescription = "Search",
+                                )
+                            }
+                            IconButton(
+                                onClick = onDeleteSelectedLands
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = "Delete Selected Lands",
+                                )
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            )
+        }
+
+        else -> {
+            TopAppBar(
+                title = {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "My Lands",
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onBackPress
+                    ) {
+                        Icon(
+                            imageVector = if(uiState is LandsMenuStates.MultiSelectLands)
+                                Icons.Rounded.Close
+                            else
+                                Icons.Rounded.ArrowBack,
+                            contentDescription = "Navigate Back Button"
+                        )
+                    }
+                },
+                actions = {
+                    when(uiState){
+                        is LandsMenuStates.Loaded -> {
+                            IconButton(
+                                onClick = { onSearchAppBarChange(true) }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Search,
+                                    contentDescription = "Search",
+                                )
+                            }
+                            if(uiState.lands.isNotEmpty()) {
+                                IconButton(
+                                    onClick = { onActionChange(LandsMenuActions.Export) }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Share,
+                                        contentDescription = "Export Lands",
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { onActionChange(LandsMenuActions.Delete) }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Delete,
+                                        contentDescription = "Delete Lands",
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = onNewLandPress
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Add,
+                                    contentDescription = "Create New Land",
+                                )
+                            }
+                        }
+                        is LandsMenuStates.ExportLands -> {
+                            IconButton(
+                                onClick = { onSearchAppBarChange(true) }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Search,
+                                    contentDescription = "Search",
+                                )
+                            }
+                            IconButton(
+                                onClick = onExportSelectedLands
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Share,
+                                    contentDescription = "Export Selected Lands",
+                                )
+                            }
+                        }
+                        is LandsMenuStates.DeleteLands -> {
+                            IconButton(
+                                onClick = { onSearchAppBarChange(true) }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Search,
+                                    contentDescription = "Search",
+                                )
+                            }
+                            IconButton(
+                                onClick = onDeleteSelectedLands
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Delete,
+                                    contentDescription = "Delete Selected Lands",
+                                )
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+            )
+        }
+    }
 }
 
 @Composable
@@ -270,19 +543,27 @@ private fun LandItem(
     ) {
         ListItem(
             modifier = Modifier.fillMaxWidth(),
-            headlineContent = {
-                Text(text = land.title)
-            },
             overlineContent = {
-                Text(text = "#${land.id}")
+                Text(
+                    text = "#${land.id}",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            },
+            headlineContent = {
+                Text(
+                    text = land.title,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             },
             leadingContent = {
                 Surface(
                     modifier = Modifier.size(
-                        width = 128.dp,
-                        height = 128.dp
+                        width = 168.dp,
+                        height = 94.dp
                     ),
-                    shape = RoundedCornerShape(24.dp)
+                    shape = RoundedCornerShape(8.dp)
                 ){
                     GoogleMap(
                         cameraPositionState = cameraPositionState,
@@ -294,7 +575,7 @@ private fun LandItem(
                                     cameraPositionState.move(
                                         CameraUpdateFactory.newLatLngBounds(
                                             bounds,
-                                            24
+                                            32
                                         )
                                     )
                                 }
@@ -333,11 +614,6 @@ private fun LandItem(
                     Checkbox(
                         checked = isChecked,
                         onCheckedChange = { onLandClick(land) }
-                    )
-                }else{
-                    Icon(
-                        imageVector = Icons.Rounded.KeyboardArrowRight,
-                        contentDescription = null
                     )
                 }
             },

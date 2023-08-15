@@ -12,3 +12,5 @@ const val DefaultUnselectedPointFillAlpha = .2f
 
 const val DefaultNavHostAnimationDurationMillis = 100
 const val DefaultAnimationDelayDurationMillis = 250L
+
+const val DefaultSearchDebounce = 1500L
