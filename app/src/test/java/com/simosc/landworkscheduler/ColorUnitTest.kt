@@ -3,6 +3,8 @@ package com.simosc.landworkscheduler
 import androidx.compose.ui.graphics.Color
 import com.simosc.landworkscheduler.domain.extension.invert
 import com.simosc.landworkscheduler.domain.extension.parseColor
+import com.simosc.landworkscheduler.domain.extension.parseColorAbgr
+import com.simosc.landworkscheduler.domain.extension.toAbgrString
 import com.simosc.landworkscheduler.domain.extension.toArgbString
 import org.junit.Test
 
@@ -17,11 +19,14 @@ class ColorUnitTest {
     @Test
     fun parseColor_isCorrect() {
         Color.Red.let { color ->
-            val string = color.toArgbString()
-            val color1 = Color.parseColor(string)
-            val color2 = Color.parseColor("ffff0000")
-            val color3 = Color.parseColor("ff0000")
-            val color4 = Color.parseColor("f00")
+            val string1 = color.toArgbString()
+            val string2 = color.toAbgrString()
+            val color1 = Color.parseColor(string1)
+            val color2 = Color.parseColorAbgr(string2)
+            val color3 = Color.parseColor("ffff0000")
+            val color4 = Color.parseColor("ff0000")
+            val color5 = Color.parseColor("ff00")
+            val color6 = Color.parseColor("f00")
 
             println("")
             println("Test: parseColor_isCorrect")
@@ -29,13 +34,20 @@ class ColorUnitTest {
             println("color1: $color1")
             println("color2: $color2")
             println("color3: $color3")
-            println("color4: $color3")
+            println("color4: $color4")
+            println("color5: $color5")
+            println("color6: $color6")
+            println("")
+            println("string1: $string1")
+            println("string2: $string2")
             println("")
 
             assertEquals(color, color1)
             assertEquals(color, color2)
             assertEquals(color, color3)
             assertEquals(color, color4)
+            assertEquals(color, color5)
+            assertEquals(color, color6)
         }
     }
 

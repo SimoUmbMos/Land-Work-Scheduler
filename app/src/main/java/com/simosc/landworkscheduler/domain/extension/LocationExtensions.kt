@@ -17,6 +17,21 @@ fun Location.isInside(border: List<LatLng>) =
         true
     )
 
+fun LatLng.toLongLatAltString() =
+    "$longitude,$latitude,0"
+
+fun parseLatLng(coordinates: String): LatLng {
+    coordinates.trim().replace(" ","").split(",").let{
+        if(it.size == 2 || it.size == 3) {
+            val latitude = it[1].toDoubleOrNull()
+            val longitude = it[0].toDoubleOrNull()
+            if( latitude != null && longitude != null)
+                return LatLng(latitude,longitude)
+        }
+    }
+    throw IllegalArgumentException()
+}
+
 fun LatLng.isInside(border: List<LatLng>) =
     PolyUtil.containsLocation(
         this,
