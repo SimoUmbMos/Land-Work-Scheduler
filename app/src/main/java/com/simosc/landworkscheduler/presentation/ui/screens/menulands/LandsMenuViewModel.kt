@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.simosc.landworkscheduler.core.config.DefaultSearchDebounce
 import com.simosc.landworkscheduler.domain.extension.tokenizedSearchIn
 import com.simosc.landworkscheduler.domain.model.Land
-import com.simosc.landworkscheduler.domain.usecase.file.GetKmlText
+import com.simosc.landworkscheduler.domain.usecase.file.GenerateKml
 import com.simosc.landworkscheduler.domain.usecase.land.DeleteLand
 import com.simosc.landworkscheduler.domain.usecase.land.GetLands
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuActions.*
@@ -16,9 +16,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.OutputStream
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -34,24 +37,25 @@ import javax.inject.Inject
 class LandsMenuViewModel @Inject constructor(
     private val getLandsUseCase: GetLands,
     private val getDeleteLandUseCase: DeleteLand,
-    private val getKmlTextUseCase: GetKmlText
+    private val generateKmlUseCase: GenerateKml
 ): ViewModel() {
     private var mainJob: Job? = null
 
-    private val _searchQuery: MutableStateFlow<String> =
-        MutableStateFlow("")
+    private val _searchQuery = MutableStateFlow("")
+    private val _error = MutableSharedFlow<String>()
 
-    private val _lands: MutableStateFlow<List<Land>?> =
-        MutableStateFlow(null)
-    private val _selectedLands: MutableStateFlow<List<Land>> =
-        MutableStateFlow(emptyList())
-    private val _selectedAction: MutableStateFlow<LandsMenuActions> =
-        MutableStateFlow(None)
+    private val _lands = MutableStateFlow<List<Land>?>(null)
+    private val _selectedLands = MutableStateFlow<List<Land>>(emptyList())
+    private val _selectedAction = MutableStateFlow(None)
 
-    private val _isLoadingAction:MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
-    private val _isSearching:MutableStateFlow<Boolean> =
-        MutableStateFlow(false)
+    private val _isLoadingAction = MutableStateFlow(false)
+    private val _isSearching = MutableStateFlow(false)
+
+
+    val searchQuery = _searchQuery.asStateFlow()
+    val isLoadingAction = _isLoadingAction.asStateFlow()
+    val isSearching = _isSearching.asStateFlow()
+    val errorMessage = _error.asSharedFlow()
 
     private val _currState: StateFlow<LandsMenuStates> =
         combine(_lands,_selectedAction, _selectedLands){ lands, selectedAction, selectedLands ->
@@ -128,13 +132,6 @@ class LandsMenuViewModel @Inject constructor(
             LandsMenuStates.Loading
         )
 
-    val searchQuery: StateFlow<String> =
-        _searchQuery.asStateFlow()
-    val isLoadingAction:StateFlow<Boolean> =
-        _isLoadingAction.asStateFlow()
-    val isSearching:StateFlow<Boolean> =
-        _isSearching.asStateFlow()
-
     override fun onCleared() {
         super.onCleared()
         stopSync()
@@ -183,18 +180,19 @@ class LandsMenuViewModel @Inject constructor(
         }
     }
 
-    fun getLandsKmlString(): String {
-        var kmlText = ""
+    suspend fun generateKml(outputStream: OutputStream){
         uiState.value.let{ state ->
             if(state is LandsMenuStates.ExportLands){
                 state.selectedLands.let { selectedLands ->
                     _isLoadingAction.update { true }
-                    kmlText = getKmlTextUseCase(selectedLands)
+                    if(!generateKmlUseCase(selectedLands, outputStream)){
+                        _error.tryEmit("File Didn't Save")
+                    }
                     _isLoadingAction.update { false }
                 }
+                changeAction(None)
             }
         }
-        return kmlText
     }
 
     fun executeLandsDelete() {

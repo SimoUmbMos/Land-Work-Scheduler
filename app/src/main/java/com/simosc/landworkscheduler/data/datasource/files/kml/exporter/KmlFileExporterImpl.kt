@@ -8,40 +8,58 @@ import com.simosc.landworkscheduler.data.datasource.files.kml.entities.KmlStyle
 import com.simosc.landworkscheduler.data.datasource.files.kml.typeconverters.getKmlRawEntities
 import com.simosc.landworkscheduler.domain.files.KmlFileExporter
 import com.simosc.landworkscheduler.domain.model.Land
+import java.io.OutputStream
 
 class KmlFileExporterImpl : KmlFileExporter {
 
-    override fun generateKmlString(land: Land): String{
-        if(land.border.isEmpty()) return ""
-        return StringBuilder().apply{
-            append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-            append("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
-            append("  <Document>\n")
-            val (style, placemark) = land.getKmlRawEntities()
-            append(style.generateKmlStyleString())
-            append(placemark.generateKmlPlacemarkString())
-            append("  </Document>\n")
-            append("</kml>")
-        }.toString()
-    }
-
-    override fun generateKmlString(lands: List<Land>): String{
-        lands.filter { it.border.isNotEmpty() }.let{ data ->
-            return StringBuilder().apply {
+    override suspend fun generateKml(
+        land: Land,
+        outputStream: OutputStream
+    ): Boolean{
+        if(land.border.isNotEmpty()) {
+            StringBuilder().apply{
                 append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
                 append("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
                 append("  <Document>\n")
-                val (styles , placemarks) = data.getKmlRawEntities()
-                styles.forEach{ style ->
-                    append(style.generateKmlStyleString())
-                }
-                placemarks.forEach{ placemark ->
-                    append(placemark.generateKmlPlacemarkString())
-                }
+                val (style, placemark) = land.getKmlRawEntities()
+                append(style.generateKmlStyleString())
+                append(placemark.generateKmlPlacemarkString())
                 append("  </Document>\n")
                 append("</kml>")
-            }.toString()
+            }.toString().let{ fileContent ->
+                outputStream.write(fileContent.toByteArray())
+                return true
+            }
         }
+        return false
+    }
+
+    override suspend fun generateKml(
+        lands: List<Land>,
+        outputStream: OutputStream
+    ): Boolean{
+        lands.filter { it.border.isNotEmpty() }.let{ data ->
+            if(data.isNotEmpty()) {
+                StringBuilder().apply {
+                    append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+                    append("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
+                    append("  <Document>\n")
+                    val (styles, placemarks) = data.getKmlRawEntities()
+                    styles.forEach { style ->
+                        append(style.generateKmlStyleString())
+                    }
+                    placemarks.forEach { placemark ->
+                        append(placemark.generateKmlPlacemarkString())
+                    }
+                    append("  </Document>\n")
+                    append("</kml>")
+                }.toString().let{ fileContent ->
+                    outputStream.write(fileContent.toByteArray())
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     private fun KmlStyle.generateKmlStyleString(): String{

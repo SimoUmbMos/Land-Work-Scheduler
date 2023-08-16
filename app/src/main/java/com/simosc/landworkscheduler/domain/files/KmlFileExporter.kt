@@ -1,8 +1,17 @@
 package com.simosc.landworkscheduler.domain.files
 
 import com.simosc.landworkscheduler.domain.model.Land
+import java.io.OutputStream
 
 interface KmlFileExporter {
-    fun generateKmlString(land: Land): String
-    fun generateKmlString(lands: List<Land>): String
+    suspend fun generateKml(
+        land: Land,
+        outputStream: OutputStream
+    ): Boolean
+
+    suspend fun generateKml(
+        lands: List<Land>,
+        outputStream: OutputStream
+    ): Boolean
+
 }

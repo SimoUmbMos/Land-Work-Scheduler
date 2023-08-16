@@ -28,6 +28,8 @@ import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuV
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewStates
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -48,20 +50,23 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             val searchQuery by viewModel.searchQuery.collectAsState()
             val isLoadingAction by viewModel.isLoadingAction.collectAsState()
             val isSearching by viewModel.isSearching.collectAsState()
+            val errorMessage by viewModel.errorMessage.collectAsState(initial = "")
 
             val createFileLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.CreateDocument("application/vnd.google-earth.kml+xml")
             ){ newFileUri ->
-                if(newFileUri != null) {
-                    ctx.contentResolver.openOutputStream(newFileUri)?.use { outputStream ->
-                        outputStream.write(viewModel.getLandsKmlString().toByteArray())
+                newFileUri?.let{
+                    CoroutineScope(Dispatchers.IO).launch {
+                        ctx.contentResolver.openOutputStream(newFileUri)?.use { outputStream ->
+                            viewModel.generateKml(outputStream)
+                        }
                     }
-                }
-                viewModel.changeAction(LandsMenuActions.None)
+                }?: viewModel.changeAction(LandsMenuActions.None)
             }
 
             LandsMenuScreen(
                 uiState = uiState,
+                errorMessage = errorMessage,
                 searchQuery = searchQuery,
                 isSearching = isSearching,
                 isLoadingAction = isLoadingAction,
