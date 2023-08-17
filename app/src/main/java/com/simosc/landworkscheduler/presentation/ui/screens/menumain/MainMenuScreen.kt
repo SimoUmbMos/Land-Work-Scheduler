@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -23,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,9 +30,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.simosc.landworkscheduler.presentation.ui.components.topbar.DefaultTopAppBar
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainMenuScreen(
     uiState: MainMenuStates,
@@ -46,31 +44,24 @@ fun MainMenuScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = {Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = "Land Work Scheduler",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    if(uiState is MainMenuStates.Loaded){
-                        Text(
-                            text = when(uiState.todayWorksCount) {
-                                in Long.MIN_VALUE .. 0L -> "No scheduled jobs for today"
-                                1L -> "1 scheduled job for today"
-                                in 1000 .. Long.MAX_VALUE -> "999+ scheduled jobs for today"
-                                else -> "${uiState.todayWorksCount} scheduled jobs for today"
-                            },
-                            style = MaterialTheme.typography.titleSmall,
-                            color = if (uiState.todayWorksCount > 0)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-                },
+            DefaultTopAppBar(
+                title = "Land Work Scheduler",
+                subTitle = if(uiState is MainMenuStates.Loaded)
+                        when(uiState.todayWorksCount) {
+                            in Long.MIN_VALUE .. 0L -> "No scheduled jobs for today"
+                            1L -> "1 scheduled job for today"
+                            in 1000 .. Long.MAX_VALUE -> "999+ scheduled jobs for today"
+                            else -> "${uiState.todayWorksCount} scheduled jobs for today"
+                        }
+                    else
+                        null,
+                subTitleColor = if(uiState is MainMenuStates.Loaded)
+                        if (uiState.todayWorksCount > 0)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onBackground
+                    else
+                        null,
                 actions = {
                     IconButton(
                         onClick = onAppSettingsClick

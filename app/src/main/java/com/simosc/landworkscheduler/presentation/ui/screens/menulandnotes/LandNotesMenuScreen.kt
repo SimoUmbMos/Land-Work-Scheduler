@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBack
@@ -27,9 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,6 +59,8 @@ import com.simosc.landworkscheduler.domain.extension.toLatLngBounds
 import com.simosc.landworkscheduler.domain.model.Land
 import com.simosc.landworkscheduler.domain.model.Note
 import com.simosc.landworkscheduler.presentation.ui.components.content.LoadingContentComponent
+import com.simosc.landworkscheduler.presentation.ui.components.topbar.DefaultTopAppBar
+import com.simosc.landworkscheduler.presentation.ui.components.topbar.SearchTopAppBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -148,7 +144,6 @@ fun LandNotesMenuScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LandNotesMenuTopBar(
     uiState: LandNotesMenuStates,
@@ -159,105 +154,24 @@ private fun LandNotesMenuTopBar(
     onIsSearchOpenChange: (Boolean) -> Unit,
 ) {
     if(isSearchOpen && uiState is LandNotesMenuStates.LoadedState){
-        TextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 8.dp,
-                    vertical = 4.dp
-                ),
-            value = searchQuery,
-            onValueChange = onSearchChange,
-            placeholder = {
-                Text(text = "Search...")
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    onIsSearchOpenChange(false)
-                }
-            ),
-            leadingIcon = {
-                IconButton(
-                    onClick = {
-                        if(searchQuery.isNotBlank())
-                            onSearchChange("")
-                        else
-                            onIsSearchOpenChange(false)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Close,
-                        contentDescription = "Clear / Close Search"
-                    )
-                }
-            },
-            trailingIcon = {
-                IconButton(
-                    onClick = {
-                        onIsSearchOpenChange(false)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = "Search"
-                    )
-                }
-            },
-            shape = RoundedCornerShape(32.dp),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor =
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-                unfocusedTextColor =
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-
-                focusedContainerColor =
-                    MaterialTheme.colorScheme.primaryContainer,
-                unfocusedContainerColor =
-                    MaterialTheme.colorScheme.primaryContainer,
-
-                focusedIndicatorColor =
-                    Color.Transparent,
-                unfocusedIndicatorColor =
-                    Color.Transparent,
-
-                focusedLeadingIconColor =
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-                unfocusedLeadingIconColor =
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-
-                focusedTrailingIconColor =
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-                unfocusedTrailingIconColor =
-                    MaterialTheme.colorScheme.onPrimaryContainer,
-
-                focusedPlaceholderColor =
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
-                unfocusedPlaceholderColor =
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
-            )
+        SearchTopAppBar(
+            searchQuery = searchQuery,
+            onSearchChange = onSearchChange,
+            onCloseSearchBar = {
+                onIsSearchOpenChange(false)
+            }
         )
     }else{
-        TopAppBar(
-            title = {
-                Text(
-                    text = when {
-                        searchQuery.isNotBlank() ->
-                            "Search: $searchQuery"
+        DefaultTopAppBar(
+            title = when {
+                searchQuery.isNotBlank() ->
+                    "Search: $searchQuery"
 
-                        uiState is LandNotesMenuStates.LoadedState ->
-                            "Land Notes: #${uiState.land.id} ${uiState.land.title}"
+                uiState is LandNotesMenuStates.LoadedState ->
+                    "Land Notes: #${uiState.land.id} ${uiState.land.title}"
 
-                        else ->
-                            "Land Notes: Loading..."
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleLarge
-                )
+                else ->
+                    "Land Notes: Loading..."
             },
             navigationIcon = {
                 IconButton(

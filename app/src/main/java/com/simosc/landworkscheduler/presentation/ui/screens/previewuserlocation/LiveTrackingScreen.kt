@@ -11,14 +11,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,9 +50,9 @@ import com.simosc.landworkscheduler.domain.model.Land
 import com.simosc.landworkscheduler.domain.model.Note
 import com.simosc.landworkscheduler.domain.model.Zone
 import com.simosc.landworkscheduler.presentation.ui.components.content.LoadingContentComponent
+import com.simosc.landworkscheduler.presentation.ui.components.topbar.DefaultTopAppBar
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveTrackingScreen(
     uiState: LiveTrackingStates,
@@ -67,13 +65,8 @@ fun LiveTrackingScreen(
 ){
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Live Tracking Screen",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
+            DefaultTopAppBar(
+                title = "Live Tracking Screen",
                 navigationIcon = {
                     IconButton(
                         onClick = onBackPress

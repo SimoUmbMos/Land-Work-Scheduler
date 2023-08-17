@@ -12,7 +12,6 @@ import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -24,18 +23,18 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -58,6 +57,7 @@ import com.simosc.landworkscheduler.presentation.ui.components.dialogs.ColorPick
 import com.simosc.landworkscheduler.presentation.ui.components.dialogs.DualTextEditorDialog
 import com.simosc.landworkscheduler.presentation.ui.components.dialogs.MessageDialog
 import com.simosc.landworkscheduler.presentation.ui.components.dialogs.TextEditorDialog
+import com.simosc.landworkscheduler.presentation.ui.components.topbar.DefaultTopAppBar
 
 
 @Composable
@@ -167,7 +167,6 @@ fun LandEditorScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LandEditorTopBar(
     uiState: LandEditorStates,
@@ -201,15 +200,8 @@ private fun LandEditorTopBar(
             else -> "Land Editor"
         }
     }
-    TopAppBar(
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
+    DefaultTopAppBar(
+        title = title,
         navigationIcon = {
             IconButton(
                 onClick = onBackPress
@@ -328,11 +320,11 @@ private fun LandEditorMap(
     onMapClick: (LatLng) -> Unit
 ) {
     var currentZoom by remember {
-        mutableStateOf(cameraPositionState.position.zoom)
+        mutableFloatStateOf(cameraPositionState.position.zoom)
     }
 
     var pointsRadius by remember{
-        mutableStateOf(cameraPositionState.position.calcRadiusFromZoom())
+        mutableDoubleStateOf(cameraPositionState.position.calcRadiusFromZoom())
     }
 
     val border = remember(uiState){
