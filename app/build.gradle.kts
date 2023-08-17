@@ -11,6 +11,7 @@ plugins {
 android {
     namespace = "com.simosc.landworkscheduler"
     compileSdk = 34
+    buildToolsVersion = "34.0.0"
 
     defaultConfig {
         applicationId = "com.simosc.landworkscheduler"
