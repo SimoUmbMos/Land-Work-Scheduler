@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.android.gms.maps.MapsInitializer
 import com.simosc.landworkscheduler.presentation.ui.navigation.MainNavHost
 import com.simosc.landworkscheduler.presentation.ui.theme.LandWorkSchedulerTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen().setKeepOnScreenCondition{
             keepSplashScreenOpen
         }
+        MapsInitializer.initialize(this)
         setContent {
             LandWorkSchedulerTheme{
                 val surface = MaterialTheme.colorScheme.surface

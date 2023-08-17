@@ -31,13 +31,21 @@ fun getAllLands(styles: List<KmlStyle>, placemarks: List<KmlPlacemark>): List<La
                 } ?: Land.emptyLand().color
             } ?: Land.emptyLand().color
         } ?: Land.emptyLand().color
-        val border = List(placemark.geometry.outerBoundary.size){ i ->
+        val border = MutableList(placemark.geometry.outerBoundary.size){ i ->
             parseLatLng(placemark.geometry.outerBoundary[i])
-        }
-        val holes = List(placemark.geometry.innerBoundary.size){ i ->
-            List(placemark.geometry.innerBoundary[i].size){ j ->
-                parseLatLng(placemark.geometry.innerBoundary[i][j])
+        }.apply {
+            if(isNotEmpty() && firstOrNull() == lastOrNull()){
+                removeAt(size - 1)
             }
+        }.toList()
+        val holes = List(placemark.geometry.innerBoundary.size){ i ->
+            MutableList(placemark.geometry.innerBoundary[i].size){ j ->
+                parseLatLng(placemark.geometry.innerBoundary[i][j])
+            }.apply {
+                if(isNotEmpty() && firstOrNull() == lastOrNull()){
+                    removeAt(size - 1)
+                }
+            }.toList()
         }
         result.add(
             Land.emptyLand().copy(

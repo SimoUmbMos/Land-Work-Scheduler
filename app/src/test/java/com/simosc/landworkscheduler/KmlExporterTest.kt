@@ -13,7 +13,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 
-class KmlUnitTest {
+class KmlExporterTest {
     private val generateKml = GenerateKml(KmlFileExporterImpl())
     private fun getLandsMockList(
         size: Int,

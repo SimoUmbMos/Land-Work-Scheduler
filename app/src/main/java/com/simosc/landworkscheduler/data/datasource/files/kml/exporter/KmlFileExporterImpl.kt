@@ -13,28 +13,6 @@ import java.io.OutputStream
 class KmlFileExporterImpl : KmlFileExporter {
 
     override suspend fun generateKml(
-        land: Land,
-        outputStream: OutputStream
-    ): Boolean{
-        if(land.border.isNotEmpty()) {
-            StringBuilder().apply{
-                append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-                append("<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n")
-                append("  <Document>\n")
-                val (style, placemark) = land.getKmlRawEntities()
-                append(style.generateKmlStyleString())
-                append(placemark.generateKmlPlacemarkString())
-                append("  </Document>\n")
-                append("</kml>")
-            }.toString().let{ fileContent ->
-                outputStream.write(fileContent.toByteArray())
-                return true
-            }
-        }
-        return false
-    }
-
-    override suspend fun generateKml(
         lands: List<Land>,
         outputStream: OutputStream
     ): Boolean{
