@@ -53,9 +53,9 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             val viewModel = hiltViewModel<LandsMenuViewModel>()
             val uiState by viewModel.uiState.collectAsState()
             val searchQuery by viewModel.searchQuery.collectAsState()
+            val errorMessage by viewModel.errorMessage.collectAsState(initial = null)
             val isLoadingAction by viewModel.isLoadingAction.collectAsState()
             val isSearching by viewModel.isSearching.collectAsState()
-            val errorMessage by viewModel.errorMessage.collectAsState(initial = null)
 
             val createFileLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.CreateDocument(KmlFileExporter.MimeType)
@@ -188,10 +188,10 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 onActionUpdate = viewModel::setAction,
                 onMapClick = viewModel::onMapClick,
                 onAddressUpdate = { title, address ->
-                    if(title.isNotBlank() && address.isNotBlank())
+                    if(address.isNotBlank())
                         viewModel.setLandTitleAndAddress(title,address)
                     else
-                        viewModel.setLandTitleAndAddress("","")
+                        viewModel.setLandTitleAndAddress(title,"")
                 },
                 onUpdateTitle = viewModel::onUpdateTitle,
                 onUpdateColor = viewModel::onUpdateColor,

@@ -15,6 +15,7 @@ import com.simosc.landworkscheduler.core.config.DefaultMapZoom
 import com.simosc.landworkscheduler.domain.exception.BorderListException
 import com.simosc.landworkscheduler.domain.exception.TitleException
 import com.simosc.landworkscheduler.domain.extension.toLatLngBounds
+import com.simosc.landworkscheduler.domain.extension.trimWithSingleWhitespaces
 import com.simosc.landworkscheduler.domain.model.Land
 import com.simosc.landworkscheduler.domain.usecase.land.GetLand
 import com.simosc.landworkscheduler.domain.usecase.land.InsertLand
@@ -187,34 +188,47 @@ class LandEditorViewModel @Inject constructor(
     }
 
     fun setLandTitleAndAddress(title: String, address: String) = viewModelScope.launch{
-        if(address.isNotBlank() && title.isNotBlank()) {
-            _uiState.value.let { state ->
-                if (state is LandEditorStates.NeedLocation) {
-                    _uiState.update {
-                        LandEditorStates.LoadingState
+        title.trimWithSingleWhitespaces().let{ newTitle ->
+            if(newTitle.isNotBlank()){
+                _uiState.update {
+                    when(it){
+                        is LandEditorStates.NeedLocation ->
+                            LandEditorStates.NeedLocation(
+                                it.land.copy(title = newTitle)
+                            )
+
+                        is LandEditorStates.NormalState ->
+                            LandEditorStates.NormalState(
+                                land = it.land,
+                                newTitle = newTitle
+                            )
+
+                        else ->
+                            it
                     }
-                    getGeoLocationAddress(address).let { addressList ->
-                        Log.d("TAG", "getGeoLocationAddress: $addressList")
-                        addressList.firstOrNull {
-                            it.hasLatitude() && it.hasLatitude()
-                        }?.let { result ->
-                            _selectedAddress.update { result }
-                            LatLng(result.latitude, result.longitude).let{ point ->
-                                viewModelScope.launch(Dispatchers.Main) {
-                                    cameraPositionState.move(
-                                        CameraUpdateFactory.newLatLng(point)
-                                    )
-                                }
-                            }
-                            _uiState.update {
-                                state.toNormalState(title)
-                            }
-                        } ?: run {
-                            _error.tryEmit(R.string.land_editor_error_land_address_is_not_found)
-                            _uiState.update {
-                                state
+                }
+            }
+        }
+        _uiState.value.let { state ->
+            if (state is LandEditorStates.NeedLocation && address.isNotBlank()) {
+                _uiState.update { LandEditorStates.LoadingState }
+                getGeoLocationAddress(address).let { addressList ->
+                    Log.d("TAG", "getGeoLocationAddress: $addressList")
+                    addressList.firstOrNull {
+                        it.hasLatitude() && it.hasLatitude()
+                    }?.let { result ->
+                        _selectedAddress.update { result }
+                        LatLng(result.latitude, result.longitude).let{ point ->
+                            viewModelScope.launch(Dispatchers.Main) {
+                                cameraPositionState.move(
+                                    CameraUpdateFactory.newLatLng(point)
+                                )
                             }
                         }
+                        _uiState.update { state.toNormalState() }
+                    } ?: run {
+                        _error.tryEmit(R.string.land_editor_error_land_address_is_not_found)
+                        _uiState.update { state }
                     }
                 }
             }
@@ -223,8 +237,11 @@ class LandEditorViewModel @Inject constructor(
 
     fun onUpdateTitle(title: String){
         _uiState.value.let { state ->
-            if(state is LandEditorStates.EditTitleState)
-                _uiState.update { state.performAction(title).submitEdit() }
+            if(state is LandEditorStates.EditTitleState) {
+                _uiState.update {
+                    state.performAction(title.trimWithSingleWhitespaces()).submitEdit()
+                }
+            }
         }
     }
 

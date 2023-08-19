@@ -87,14 +87,14 @@ class LandsMenuViewModel @Inject constructor(
 
     @OptIn(FlowPreview::class)
     val uiState: StateFlow<LandsMenuStates> = _searchQuery
+        .onEach {
+            _isSearching.update { true }
+        }
         .debounce { query ->
             if(query.isNotBlank())
                 DefaultSearchDebounce
             else
                 0L
-        }
-        .onEach {
-            _isSearching.update { true }
         }
         .combine(_currState){ query, currState ->
             when(currState){

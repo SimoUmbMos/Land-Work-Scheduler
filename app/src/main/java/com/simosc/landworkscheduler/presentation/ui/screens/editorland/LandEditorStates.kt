@@ -13,8 +13,8 @@ sealed class LandEditorStates{
     class NeedLocation(
         val land: Land
     ): LandEditorStates(){
-        fun toNormalState(title: String): NormalState{
-            return NormalState(land = land.copy(title = title))
+        fun toNormalState(): NormalState{
+            return NormalState(land = land)
         }
     }
 

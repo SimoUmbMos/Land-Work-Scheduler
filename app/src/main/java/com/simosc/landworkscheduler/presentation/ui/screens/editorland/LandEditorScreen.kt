@@ -1,15 +1,20 @@
 package com.simosc.landworkscheduler.presentation.ui.screens.editorland
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.twotone.Create
+import androidx.compose.material.icons.twotone.Done
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -18,6 +23,7 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -32,12 +38,14 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
@@ -56,7 +64,6 @@ import com.simosc.landworkscheduler.domain.extension.calcRadiusFromZoom
 import com.simosc.landworkscheduler.domain.model.Land
 import com.simosc.landworkscheduler.presentation.ui.components.content.LoadingContentComponent
 import com.simosc.landworkscheduler.presentation.ui.components.dialogs.ColorPickerDialog
-import com.simosc.landworkscheduler.presentation.ui.components.dialogs.DualTextEditorDialog
 import com.simosc.landworkscheduler.presentation.ui.components.dialogs.MessageDialog
 import com.simosc.landworkscheduler.presentation.ui.components.dialogs.TextEditorDialog
 import com.simosc.landworkscheduler.presentation.ui.components.topbar.DefaultTopAppBar
@@ -272,7 +279,7 @@ private fun LandEditorTopBar(
                 onClick = onBackPress
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.ArrowBack,
+                    imageVector = Icons.Default.ArrowBack,
                     contentDescription = stringResource(id = R.string.navigate_back_label)
                 )
             }
@@ -288,7 +295,7 @@ private fun LandEditorTopBar(
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Menu,
+                        imageVector = Icons.Default.Menu,
                         contentDescription = stringResource(id = R.string.land_editor_action_show_menu)
                     )
                 }
@@ -358,7 +365,7 @@ private fun LandEditorFab(
                 )
             ) {
                 Icon(
-                    imageVector = Icons.Default.Done,
+                    imageVector = Icons.TwoTone.Done,
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -377,7 +384,7 @@ private fun LandEditorFab(
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
             ) {
                 Icon(
-                    imageVector = Icons.Default.Create,
+                    imageVector = Icons.TwoTone.Create,
                     contentDescription = null
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -581,14 +588,8 @@ private fun ShowDialogs(
                 onDismissDialog = onCancelAction
             )
         is LandEditorStates.NeedLocation ->
-            DualTextEditorDialog(
-                initialText1 = uiState.land.title,
-                textLabel1 = stringResource(id = R.string.land_editor_land_title_label),
-                textLabel2 = stringResource(id = R.string.land_editor_land_address_label),
-                textPlaceHolder2 = stringResource(id = R.string.land_editor_land_address_placeholder),
-                properties = DialogProperties(
-                    dismissOnClickOutside = false
-                ),
+            NewLandDialog(
+                initialLandTitle = uiState.land.title,
                 onSubmit = onAddressUpdate,
                 onDismiss = onBackPress
             )
@@ -604,6 +605,88 @@ private fun ShowDialogs(
                     onCancel = onBackPress,
                     onDismiss = onNeedSaveDismiss
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NewLandDialog(
+    initialLandTitle: String = "",
+    initialLandAddress: String = "",
+    onDismiss: () -> Unit,
+    onSubmit: (String, String) -> Unit
+){
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = false,
+        )
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                var landTitle by remember(initialLandTitle){
+                    mutableStateOf(initialLandTitle)
+                }
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = landTitle,
+                    onValueChange = { landTitle = it },
+                    singleLine = true,
+                    label = {
+                        Text(
+                            text = stringResource(id = R.string.land_editor_land_title_label),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                var landAddress by remember(initialLandAddress){
+                    mutableStateOf(initialLandAddress)
+                }
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = landAddress,
+                    onValueChange = { landAddress = it },
+                    singleLine = true,
+                    label = {
+                        Text(
+                            text = stringResource(id = R.string.land_editor_land_address_label),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    },
+                    placeholder = {
+                        Text(
+                            text = stringResource(id = R.string.land_editor_land_address_placeholder),
+                        )
+                    }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    onClick = {
+                        onSubmit(
+                            landTitle,
+                            landAddress
+                        )
+                    },
+                ) {
+                    Text(
+                        text = stringResource(
+                            id = R.string.submit_label
+                        )
+                    )
+                }
             }
         }
     }

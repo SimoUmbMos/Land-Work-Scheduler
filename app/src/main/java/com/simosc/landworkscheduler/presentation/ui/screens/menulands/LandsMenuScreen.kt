@@ -10,12 +10,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -321,7 +321,7 @@ private fun LandMenuTopBar(
                         onClick = onBackPress
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Close,
+                            imageVector = Icons.Default.Close,
                             contentDescription = stringResource(id = R.string.navigate_back_label)
                         )
                     }
@@ -335,7 +335,7 @@ private fun LandMenuTopBar(
                                     onClick = { onSearchAppBarChange(true) }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Search,
+                                        imageVector = Icons.Default.Search,
                                         contentDescription = stringResource(
                                             id = R.string.search_label
                                         ),
@@ -346,7 +346,7 @@ private fun LandMenuTopBar(
                                         onClick = { onActionChange(LandsMenuActions.Export) }
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Share,
+                                            imageVector = Icons.Default.Share,
                                             contentDescription = stringResource(
                                                 id = R.string.land_menu_action_export_lands
                                             ),
@@ -356,7 +356,7 @@ private fun LandMenuTopBar(
                                         onClick = { onActionChange(LandsMenuActions.Delete) }
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Delete,
+                                            imageVector = Icons.Default.Delete,
                                             contentDescription = stringResource(
                                                 id = R.string.land_menu_action_delete_lands
                                             ),
@@ -367,7 +367,7 @@ private fun LandMenuTopBar(
                                     onClick = onNewLandPress
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Add,
+                                        imageVector = Icons.Default.Add,
                                         contentDescription = stringResource(
                                             id = R.string.land_menu_action_create_land
                                         ),
@@ -380,7 +380,7 @@ private fun LandMenuTopBar(
                                     onClick = { onSearchAppBarChange(true) }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Search,
+                                        imageVector = Icons.Default.Search,
                                         contentDescription = stringResource(
                                             id = R.string.search_label
                                         ),
@@ -390,7 +390,7 @@ private fun LandMenuTopBar(
                                     onClick = onExportSelectedLands
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Share,
+                                        imageVector = Icons.Default.Share,
                                         contentDescription = stringResource(
                                             id = R.string.land_menu_action_export_lands_execute
                                         ),
@@ -403,7 +403,7 @@ private fun LandMenuTopBar(
                                     onClick = { onSearchAppBarChange(true) }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Search,
+                                        imageVector = Icons.Default.Search,
                                         contentDescription = stringResource(
                                             id = R.string.search_label
                                         ),
@@ -413,7 +413,7 @@ private fun LandMenuTopBar(
                                     onClick = onDeleteSelectedLands
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Delete,
+                                        imageVector = Icons.Default.Delete,
                                         contentDescription = stringResource(
                                             id = R.string.land_menu_action_delete_lands_execute
                                         ),
@@ -453,9 +453,9 @@ private fun LandMenuTopBar(
                     ) {
                         Icon(
                             imageVector = if(uiState is LandsMenuStates.MultiSelectLands)
-                                Icons.Rounded.Close
+                                Icons.Default.Close
                             else
-                                Icons.Rounded.ArrowBack,
+                                Icons.Default.ArrowBack,
                             contentDescription = stringResource(id = R.string.navigate_back_label)
                         )
                     }
@@ -469,7 +469,7 @@ private fun LandMenuTopBar(
                                     onClick = { onSearchAppBarChange(true) }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Search,
+                                        imageVector = Icons.Default.Search,
                                         contentDescription = stringResource(
                                             id = R.string.search_label
                                         ),
@@ -480,7 +480,7 @@ private fun LandMenuTopBar(
                                         onClick = { onActionChange(LandsMenuActions.Export) }
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Share,
+                                            imageVector = Icons.Default.Share,
                                             contentDescription = stringResource(
                                                 id = R.string.land_menu_action_export_lands
                                             ),
@@ -490,7 +490,7 @@ private fun LandMenuTopBar(
                                         onClick = { onActionChange(LandsMenuActions.Delete) }
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Rounded.Delete,
+                                            imageVector = Icons.Default.Delete,
                                             contentDescription = stringResource(
                                                 id = R.string.land_menu_action_delete_lands
                                             ),
@@ -501,7 +501,7 @@ private fun LandMenuTopBar(
                                     onClick = onNewLandPress
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Add,
+                                        imageVector = Icons.Default.Add,
                                         contentDescription = stringResource(
                                             id = R.string.land_menu_action_create_land
                                         ),
@@ -514,7 +514,7 @@ private fun LandMenuTopBar(
                                     onClick = { onSearchAppBarChange(true) }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Search,
+                                        imageVector = Icons.Default.Search,
                                         contentDescription = stringResource(
                                             id = R.string.search_label
                                         ),
@@ -524,7 +524,7 @@ private fun LandMenuTopBar(
                                     onClick = onExportSelectedLands
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Share,
+                                        imageVector = Icons.Default.Share,
                                         contentDescription = stringResource(
                                             id = R.string.land_menu_action_export_lands_execute
                                         ),
@@ -537,7 +537,7 @@ private fun LandMenuTopBar(
                                     onClick = { onSearchAppBarChange(true) }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Search,
+                                        imageVector = Icons.Default.Search,
                                         contentDescription = stringResource(
                                             id = R.string.search_label
                                         ),
@@ -547,7 +547,7 @@ private fun LandMenuTopBar(
                                     onClick = onDeleteSelectedLands
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.Delete,
+                                        imageVector = Icons.Default.Delete,
                                         contentDescription = stringResource(
                                             id = R.string.land_menu_action_delete_lands_execute
                                         ),

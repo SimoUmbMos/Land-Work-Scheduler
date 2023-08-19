@@ -4,11 +4,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Place
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -146,7 +145,7 @@ private fun LandPreviewScreenTopBar(
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Edit,
+                        imageVector = Icons.Default.Edit,
                         contentDescription = stringResource(
                             id = R.string.land_preview_action_open_edit_menu
                         )
@@ -166,7 +165,7 @@ private fun LandPreviewScreenTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.Edit,
+                                imageVector = Icons.Default.Edit,
                                 contentDescription = null
                             )
                         },
@@ -182,7 +181,7 @@ private fun LandPreviewScreenTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.Delete,
+                                imageVector = Icons.Default.Delete,
                                 contentDescription = null
                             )
                         },
@@ -196,7 +195,7 @@ private fun LandPreviewScreenTopBar(
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Menu,
+                        imageVector = Icons.Default.Menu,
                         contentDescription = stringResource(
                             id = R.string.land_preview_action_open_navigation_menu
                         )
@@ -216,7 +215,7 @@ private fun LandPreviewScreenTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.Place,
+                                imageVector = Icons.Default.Place,
                                 contentDescription = null
                             )
                         },
@@ -232,7 +231,7 @@ private fun LandPreviewScreenTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Rounded.LocationOn,
+                                imageVector = Icons.Default.Place,
                                 contentDescription = null
                             )
                         },

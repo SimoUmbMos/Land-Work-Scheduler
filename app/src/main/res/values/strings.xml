@@ -96,11 +96,11 @@
         <string name="land_editor_subtitle_add_point_between_edit_placed_point">Edit Placed Point</string>
         <string name="land_editor_subtitle_add_points">Add Points</string>
         <!-- addresses strings -->
-        <string name="land_editor_land_address_label">Land Address</string>
-        <string name="land_editor_land_address_placeholder">Address City, Country</string>
         <string name="land_editor_waiting_land_address">Waiting Address…</string>
         <!-- labels strings -->
         <string name="land_editor_land_title_label">Land Title</string>
+        <string name="land_editor_land_address_label">Land Address</string>
+        <string name="land_editor_land_address_placeholder">City, Country</string>
         <!-- actions strings -->
         <string name="land_editor_action_show_menu">Show Menu</string>
         <string name="land_editor_action_add_points">Add Points</string>

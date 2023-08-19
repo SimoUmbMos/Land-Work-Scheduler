@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.twotone.KeyboardArrowRight
+import androidx.compose.material.icons.twotone.LocationOn
+import androidx.compose.material.icons.twotone.DateRange
+import androidx.compose.material.icons.twotone.List
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -180,14 +180,14 @@ private fun MainMenuLandsCard(
             leadingContent = {
                 Icon(
                     modifier = Modifier.size(64.dp),
-                    imageVector = Icons.Default.List,
+                    imageVector = Icons.TwoTone.List,
                     contentDescription = null,
                 )
             },
             trailingContent = {
                 Icon(
                     modifier = Modifier.size(16.dp),
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    imageVector = Icons.TwoTone.KeyboardArrowRight,
                     contentDescription = null,
                 )
             },
@@ -221,14 +221,14 @@ private fun MainMenuSchedulesCard(
             leadingContent = {
                 Icon(
                     modifier = Modifier.size(64.dp),
-                    imageVector = Icons.Default.DateRange,
+                    imageVector = Icons.TwoTone.DateRange,
                     contentDescription = null,
                 )
             },
             trailingContent = {
                 Icon(
                     modifier = Modifier.size(16.dp),
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    imageVector = Icons.TwoTone.KeyboardArrowRight,
                     contentDescription = null,
                 )
             },
@@ -262,14 +262,14 @@ private fun MainMenuTrackingCard(
             leadingContent = {
                 Icon(
                     modifier = Modifier.size(64.dp),
-                    imageVector = Icons.Default.LocationOn,
+                    imageVector = Icons.TwoTone.LocationOn,
                     contentDescription = null,
                 )
             },
             trailingContent = {
                 Icon(
                     modifier = Modifier.size(16.dp),
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    imageVector = Icons.TwoTone.KeyboardArrowRight,
                     contentDescription = null,
                 )
             },
