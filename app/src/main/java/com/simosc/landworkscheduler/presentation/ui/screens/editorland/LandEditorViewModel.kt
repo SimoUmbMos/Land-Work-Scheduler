@@ -9,6 +9,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.CameraPositionState
+import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.core.config.DefaultMapTarget
 import com.simosc.landworkscheduler.core.config.DefaultMapZoom
 import com.simosc.landworkscheduler.domain.exception.BorderListException
@@ -23,8 +24,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -51,8 +55,8 @@ class LandEditorViewModel @Inject constructor(
         MutableStateFlow(null)
     private val _selectedId: MutableStateFlow<Long> =
         MutableStateFlow(0L)
-    private val _error: MutableStateFlow<String?> =
-        MutableStateFlow(null)
+    private val _error: MutableSharedFlow<Int?> =
+        MutableSharedFlow()
     private val _uiState: MutableStateFlow<LandEditorStates> =
         MutableStateFlow(LandEditorStates.LoadingState)
 
@@ -137,8 +141,8 @@ class LandEditorViewModel @Inject constructor(
 
     val cameraPositionState: CameraPositionState
         get() = _cameraPositionState
-    val error: StateFlow<String?>
-        get() = _error.asStateFlow()
+    val error: SharedFlow<Int?>
+        get() = _error.asSharedFlow()
     val uiState: StateFlow<LandEditorStates>
         get() = _uiState.asStateFlow()
 
@@ -162,10 +166,6 @@ class LandEditorViewModel @Inject constructor(
         }
     }
 
-    fun clearError(){
-        _error.update { null }
-    }
-
     fun onMapClick(point: LatLng){
         _uiState.value.let { state ->
             when(state){
@@ -186,8 +186,8 @@ class LandEditorViewModel @Inject constructor(
         }
     }
 
-    fun setAddress(address: String) = viewModelScope.launch{
-        if(address.isNotBlank()) {
+    fun setLandTitleAndAddress(title: String, address: String) = viewModelScope.launch{
+        if(address.isNotBlank() && title.isNotBlank()) {
             _uiState.value.let { state ->
                 if (state is LandEditorStates.NeedLocation) {
                     _uiState.update {
@@ -207,10 +207,10 @@ class LandEditorViewModel @Inject constructor(
                                 }
                             }
                             _uiState.update {
-                                state.toNormalState()
+                                state.toNormalState(title)
                             }
                         } ?: run {
-                            _error.update { "Can't find the give address" }
+                            _error.tryEmit(R.string.land_editor_error_land_address_is_not_found)
                             _uiState.update {
                                 state
                             }
@@ -273,11 +273,14 @@ class LandEditorViewModel @Inject constructor(
                 }catch (e: Exception){
                     when(e){
                         is BorderListException ->
-                            _error.update { "Border is Empty" }
+                            _error.tryEmit(R.string.land_editor_error_land_border_is_empty)
+
                         is TitleException ->
-                            _error.update { "Title is Empty" }
+                            _error.tryEmit(R.string.land_editor_error_land_title_is_empty)
+
                         else ->
-                            _error.update { "Something went wrong" }
+                            _error.tryEmit(R.string.land_editor_error_land_save_error)
+
                     }
                     false
                 }

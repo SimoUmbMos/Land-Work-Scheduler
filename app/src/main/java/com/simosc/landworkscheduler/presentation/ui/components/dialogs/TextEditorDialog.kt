@@ -18,14 +18,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.simosc.landworkscheduler.R
 
 @Preview
 @Composable
-private fun PreviewTextEditorDialog(){
+private fun PreviewTextEditorDialogDefault(){
+    TextEditorDialog(
+        onSubmit = {},
+        onDismiss = {}
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewTextEditorDialogWithData(){
     TextEditorDialog(
         textLabel = "Title",
         initialText = "Mock Text",
@@ -42,7 +53,7 @@ fun TextEditorDialog(
     runDismissOnSubmit: Boolean = false,
     textLabel: String? = null,
     textPlaceHolder: String? = null,
-    submitButtonText: String = "Submit",
+    submitButtonText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions(
         imeAction = ImeAction.Done
     )
@@ -116,7 +127,11 @@ fun TextEditorDialog(
                         .fillMaxWidth()
                         .padding(top = 16.dp)
                 ) {
-                    Text(text = submitButtonText.ifBlank { "Submit" })
+                    Text(
+                        text = submitButtonText?.ifBlank {
+                            stringResource(R.string.submit_label)
+                        }?: stringResource(R.string.submit_label)
+                    )
                 }
             }
         }

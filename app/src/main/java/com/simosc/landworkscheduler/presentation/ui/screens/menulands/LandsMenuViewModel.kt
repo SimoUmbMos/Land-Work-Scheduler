@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.core.config.DefaultSearchDebounce
 import com.simosc.landworkscheduler.domain.extension.tokenizedSearchIn
 import com.simosc.landworkscheduler.domain.model.Land
@@ -30,7 +31,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.OutputStream
-import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,7 +42,7 @@ class LandsMenuViewModel @Inject constructor(
     private var mainJob: Job? = null
 
     private val _searchQuery = MutableStateFlow("")
-    private val _error = MutableSharedFlow<String>()
+    private val _error = MutableSharedFlow<Int?>()
 
     private val _lands = MutableStateFlow<List<Land>?>(null)
     private val _selectedLands = MutableStateFlow<List<Land>>(emptyList())
@@ -162,17 +162,14 @@ class LandsMenuViewModel @Inject constructor(
         }
     }
 
-    fun createFileToExport(createFileLauncher: ManagedActivityResultLauncher<String, Uri?>) {
+    fun createFileToExport(
+        createFileLauncher: ManagedActivityResultLauncher<String, Uri?>,
+        fileName: String
+    ) {
         uiState.value.let { state ->
             if(state is LandsMenuStates.ExportLands) {
                 if(state.selectedLands.isNotEmpty()) {
-                    LocalDateTime.now().run {
-                        createFileLauncher.launch(
-                            "exported_lands_" +
-                                    "${year}${monthValue}${dayOfMonth}_" +
-                                    "${hour}${minute}${second}_${nano}"
-                        )
-                    }
+                    createFileLauncher.launch(fileName)
                 }else{
                     changeAction(None)
                 }
@@ -180,19 +177,27 @@ class LandsMenuViewModel @Inject constructor(
         }
     }
 
-    suspend fun generateKml(outputStream: OutputStream){
+    suspend fun generateKml(outputStream: OutputStream): Boolean{
+        var result = false
         uiState.value.let{ state ->
             if(state is LandsMenuStates.ExportLands){
                 state.selectedLands.let { selectedLands ->
                     _isLoadingAction.update { true }
-                    if(!generateKmlUseCase(selectedLands, outputStream)){
-                        _error.tryEmit("File Didn't Save")
+                    try{
+                        if(generateKmlUseCase(selectedLands, outputStream)){
+                            result = true
+                        }else{
+                            _error.tryEmit(R.string.land_menu_error_cant_save_file)
+                        }
+                    }catch (e: Exception){
+                        _error.tryEmit(R.string.land_menu_error_cant_save_file)
                     }
                     _isLoadingAction.update { false }
                 }
-                changeAction(None)
             }
         }
+        changeAction(None)
+        return result
     }
 
     fun executeLandsDelete() {
@@ -209,8 +214,8 @@ class LandsMenuViewModel @Inject constructor(
                                 removeAll(selectedLands)
                             }?.toList()
                         }
-                        changeAction(None)
                         _isLoadingAction.update { false }
+                        changeAction(None)
                     }
                 }
             }

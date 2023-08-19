@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -43,6 +44,7 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.core.config.DefaultMapItemFillAlpha
 import com.simosc.landworkscheduler.core.config.DefaultMapItemStrokeAlpha
 import com.simosc.landworkscheduler.domain.extension.isInside
@@ -130,7 +132,7 @@ fun SingleLocationPickerDialog(
     mapSize: Dp = 256.dp,
     mapType: MapType = MapType.HYBRID,
     dialogProperties: DialogProperties = DialogProperties(),
-    submitButtonText: String = "Submit",
+    submitButtonText: String? = null,
     onDismissRequest: () -> Unit,
     onSubmitRequest: (LatLng) -> Unit,
 ){
@@ -191,7 +193,9 @@ fun SingleLocationPickerDialog(
                                 tint = Color.Red
                             )
                         }else{
-                            Text(text = "Map is loading...")
+                            Text(
+                                text = stringResource(R.string.map_is_loading_label)
+                            )
                         }
                     }
                     IconButton(
@@ -222,7 +226,7 @@ fun SingleLocationPickerDialog(
                         },
                     ) {
                         Text(
-                            text = submitButtonText,
+                            text = submitButtonText ?: stringResource(R.string.submit_label),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -241,7 +245,7 @@ fun SingleLocationPickerDialog(
     mapSize: Dp = 256.dp,
     selectedMapType: MapType = MapType.HYBRID,
     dialogProperties: DialogProperties = DialogProperties(),
-    submitButtonText: String = "Submit",
+    submitButtonText: String? = null,
     onDismissRequest: () -> Unit,
     onSubmitRequest: (LatLng) -> Unit,
 ){
@@ -332,7 +336,9 @@ fun SingleLocationPickerDialog(
                                 tint = Color.Red
                             )
                         } else {
-                            Text(text = "Map is loading...")
+                            Text(
+                                text = stringResource(R.string.map_is_loading_label)
+                            )
                         }
                     }
                     IconButton(
@@ -366,7 +372,7 @@ fun SingleLocationPickerDialog(
                             },
                         ) {
                             Text(
-                                text = submitButtonText,
+                                text = submitButtonText ?: stringResource(R.string.submit_label),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )

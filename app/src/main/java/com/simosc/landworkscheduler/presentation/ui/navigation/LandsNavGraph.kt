@@ -7,6 +7,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.core.net.toFile
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -14,7 +16,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
+import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.core.config.DefaultAnimationDelayDurationMillis
+import com.simosc.landworkscheduler.domain.files.KmlFileExporter
 import com.simosc.landworkscheduler.presentation.ui.screens.editorland.LandEditorScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.editorland.LandEditorViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandNoteEditorScreen
@@ -32,6 +36,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
 
 fun NavGraphBuilder.landsNavGraph(navController: NavController) {
@@ -50,15 +55,19 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             val searchQuery by viewModel.searchQuery.collectAsState()
             val isLoadingAction by viewModel.isLoadingAction.collectAsState()
             val isSearching by viewModel.isSearching.collectAsState()
-            val errorMessage by viewModel.errorMessage.collectAsState(initial = "")
+            val errorMessage by viewModel.errorMessage.collectAsState(initial = null)
 
             val createFileLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.CreateDocument("application/vnd.google-earth.kml+xml")
+                ActivityResultContracts.CreateDocument(KmlFileExporter.MimeType)
             ){ newFileUri ->
                 newFileUri?.let{
                     CoroutineScope(Dispatchers.IO).launch {
-                        ctx.contentResolver.openOutputStream(newFileUri)?.use { outputStream ->
-                            viewModel.generateKml(outputStream)
+                        var fileGenerated = false
+                        ctx.contentResolver.openOutputStream(it)?.use { outputStream ->
+                            fileGenerated = viewModel.generateKml(outputStream)
+                        }
+                        if(!fileGenerated) {
+                            it.toFile().delete()
                         }
                     }
                 }?: viewModel.changeAction(LandsMenuActions.None)
@@ -66,7 +75,7 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
 
             LandsMenuScreen(
                 uiState = uiState,
-                errorMessage = errorMessage,
+                errorMessage = errorMessage?.let { stringResource(id = it) },
                 searchQuery = searchQuery,
                 isSearching = isSearching,
                 isLoadingAction = isLoadingAction,
@@ -93,7 +102,15 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                     viewModel.executeLandsDelete()
                 },
                 onExportSelectedLands = {
-                    viewModel.createFileToExport(createFileLauncher)
+                    LocalDateTime.now().run{
+                        viewModel.createFileToExport(
+                            createFileLauncher,
+                            ctx.getString(
+                                R.string.land_menu_export_file_name,
+                                year,monthValue,dayOfMonth,hour,minute,second,nano
+                            )
+                        )
+                    }
                 }
             )
             LaunchedEffect(Unit){
@@ -146,7 +163,6 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 },
             )
             LaunchedEffect(Unit){
-                //delay(DefaultNavHostAnimationDurationMillis.toLong())
                 viewModel.loadData(it.arguments!!.getLong("lid"))
             }
         }
@@ -163,20 +179,19 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             val coroutineScope = rememberCoroutineScope()
             val viewModel = hiltViewModel<LandEditorViewModel>()
             val uiState by viewModel.uiState.collectAsState()
-            val error by viewModel.error.collectAsState()
+            val error by viewModel.error.collectAsState(initial = null)
             LandEditorScreen(
                 uiState = uiState,
                 cameraPositionState = viewModel.cameraPositionState,
-                error = error,
-                onClearError = viewModel::clearError,
+                error = error?.let{ stringResource(id = it) },
                 onBackPress = navController::popBackStack,
                 onActionUpdate = viewModel::setAction,
                 onMapClick = viewModel::onMapClick,
-                onAddressUpdate = { city, country ->
-                    if(city.isNotBlank() && country.isNotBlank())
-                        viewModel.setAddress("$city, $country")
+                onAddressUpdate = { title, address ->
+                    if(title.isNotBlank() && address.isNotBlank())
+                        viewModel.setLandTitleAndAddress(title,address)
                     else
-                        viewModel.setAddress("")
+                        viewModel.setLandTitleAndAddress("","")
                 },
                 onUpdateTitle = viewModel::onUpdateTitle,
                 onUpdateColor = viewModel::onUpdateColor,
@@ -191,7 +206,6 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 }
             )
             LaunchedEffect(Unit){
-                //delay(DefaultNavHostAnimationDurationMillis.toLong())
                 viewModel.setSelectedId(it.arguments?.getLong("lid") ?: 0L)
             }
         }
@@ -226,7 +240,6 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 }
             )
             LaunchedEffect(Unit){
-                //delay(DefaultNavHostAnimationDurationMillis.toLong())
                 viewModel.startSync(it.arguments!!.getLong("lid"))
             }
         }
@@ -281,7 +294,6 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 }
             )
             LaunchedEffect(Unit){
-                //delay(DefaultNavHostAnimationDurationMillis.toLong())
                 viewModel.setDataIds(
                     landId = it.arguments!!.getLong("lid"),
                     noteId = it.arguments!!.getLong("nid")

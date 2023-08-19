@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.core.config.DefaultMapItemFillAlpha
 import com.simosc.landworkscheduler.core.config.DefaultMapItemStrokeAlpha
 import com.simosc.landworkscheduler.core.config.DefaultSelectedPointFillAlpha
@@ -137,7 +139,7 @@ fun LandEditorScreen(
                     )
 
                     is LandEditorStates.NeedLocation -> LoadingContentComponent(
-                        text = "Waiting Address..."
+                        text = stringResource(id = R.string.land_editor_waiting_land_address)
                     )
 
                     else -> LoadingContentComponent()
@@ -177,38 +179,101 @@ private fun LandEditorTopBar(
     var showSubMenu by remember{
         mutableStateOf(false)
     }
-    val title = remember(uiState){
-        when(uiState){
-            is LandEditorStates.AddPointState -> "Land Editor: Add Points"
-            is LandEditorStates.AddBetweenPointState ->
-                if(uiState.selectedIndex == -1)
-                    if(uiState.startIndex == -1) "Land Editor: Select Point"
-                    else if(uiState.endIndex == -1) "Land Editor: Select Next Point"
-                    else "Land Editor: Place Point"
-                else "Land Editor: Edit Point"
-            is LandEditorStates.DeletePointState -> "Land Editor: Delete Points"
-            is LandEditorStates.EditPointState ->
-                if(uiState.selectedIndex == -1) "Land Editor: Select Point"
-                else "Land Editor: Place Point"
-            is LandEditorStates.EditColorState -> "Land Editor: Select Color"
-            is LandEditorStates.EditTitleState -> "Land Editor: Select Title"
-            is LandEditorStates.NeedLocation -> "Land Editor: Select Location"
-            is LandEditorStates.NormalState ->
-                if(uiState.newTitle.isBlank()) "Land Editor"
-                else if(uiState.land.id > 0L) "#${uiState.land.id} ${uiState.newTitle}"
-                else uiState.newTitle
-            else -> "Land Editor"
-        }
-    }
     DefaultTopAppBar(
-        title = title,
+        title = stringResource(id = R.string.land_editor_title_default),
+        subTitle = when(uiState){
+            is LandEditorStates.AddPointState -> {
+                stringResource(id = R.string.land_editor_subtitle_add_points)
+            }
+
+            is LandEditorStates.AddBetweenPointState -> when{
+                uiState.selectedIndex != -1 -> {
+                    stringResource(
+                        id = R.string.land_editor_subtitle_add_point_between_edit_placed_point
+                    )
+                }
+
+                uiState.startIndex == -1 -> {
+                    stringResource(
+                        id = R.string.land_editor_subtitle_add_point_between_select_first_point
+                    )
+                }
+
+                uiState.endIndex == -1 -> {
+                    stringResource(
+                        id = R.string.land_editor_subtitle_add_point_between_select_second_point
+                    )
+                }
+
+                else -> {
+                    stringResource(
+                        id = R.string.land_editor_subtitle_add_point_between_place_new_point
+                    )
+                }
+            }
+
+            is LandEditorStates.DeletePointState -> {
+                stringResource(id = R.string.land_editor_subtitle_delete_points)
+            }
+
+            is LandEditorStates.EditPointState -> when{
+                uiState.selectedIndex < 0 -> {
+                    stringResource(
+                        id = R.string.land_editor_subtitle_edit_points_select_point
+                    )
+                }
+
+                else -> {
+                    stringResource(
+                        id = R.string.land_editor_subtitle_edit_points_edit_selected_point
+                    )
+                }
+            }
+
+            is LandEditorStates.EditColorState -> {
+                stringResource(id = R.string.land_editor_subtitle_change_land_color)
+            }
+
+            is LandEditorStates.EditTitleState -> {
+                stringResource(id = R.string.land_editor_subtitle_change_land_title)
+            }
+
+            is LandEditorStates.NeedLocation -> {
+                stringResource(id = R.string.land_editor_subtitle_select_location)
+            }
+
+            is LandEditorStates.NormalState -> when{
+                uiState.newTitle.isBlank() -> {
+                    null
+                }
+
+                uiState.land.id <= 0L -> {
+                    stringResource(
+                        id = R.string.land_editor_subtitle_new_land_default,
+                        uiState.newTitle
+                    )
+                }
+
+                else -> {
+                    stringResource(
+                        id = R.string.land_editor_subtitle_edit_land_default,
+                        uiState.land.id,
+                        uiState.newTitle
+                    )
+                }
+            }
+
+            else -> {
+                null
+            }
+        },
         navigationIcon = {
             IconButton(
                 onClick = onBackPress
             ) {
                 Icon(
                     imageVector = Icons.Rounded.ArrowBack,
-                    contentDescription = "Go Back"
+                    contentDescription = stringResource(id = R.string.navigate_back_label)
                 )
             }
         },
@@ -224,32 +289,44 @@ private fun LandEditorTopBar(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Menu,
-                        contentDescription = "Show Menu"
+                        contentDescription = stringResource(id = R.string.land_editor_action_show_menu)
                     )
                 }
                 DropdownMenu(
                     expanded = showSubMenu,
                     onDismissRequest = { showSubMenu = false }
                 ) {
-                    LandEditorActions.values().forEach {
-                        val text = when (it) {
-                            LandEditorActions.ADD_POINTS -> "Add Points"
-                            LandEditorActions.ADD_BETWEEN_POINTS -> "Add Point Between Points"
-                            LandEditorActions.DELETE_POINTS -> "Delete Points"
-                            LandEditorActions.EDIT_POINTS -> "Edit Points"
-                            LandEditorActions.CHANGE_TITLE -> "Change Title"
-                            LandEditorActions.CHANGE_COLOR -> "Change Color"
-                        }
+                    LandEditorActions.values().forEach { landEditorAction ->
+                        val text = when (landEditorAction) {
+                            LandEditorActions.ADD_POINTS ->
+                                R.string.land_editor_action_add_points
+                            LandEditorActions.ADD_BETWEEN_POINTS ->
+                                R.string.land_editor_action_add_points_between_points
+                            LandEditorActions.DELETE_POINTS ->
+                                R.string.land_editor_action_delete_points
+                            LandEditorActions.EDIT_POINTS ->
+                                R.string.land_editor_action_edit_points
+                            LandEditorActions.CHANGE_TITLE ->
+                                R.string.land_editor_action_change_title
+                            LandEditorActions.CHANGE_COLOR ->
+                                R.string.land_editor_action_change_color
+                        }.let{ stringId -> stringResource(id = stringId)}
                         DropdownMenuItem(
                             text = { Text(text = text) },
                             onClick = {
                                 showSubMenu = false
-                                onActionUpdate(it)
+                                onActionUpdate(landEditorAction)
                             }
                         )
                     }
                     DropdownMenuItem(
-                        text = { Text(text = "Reset Changes") },
+                        text = {
+                            Text(
+                                text = stringResource(
+                                    id = R.string.land_editor_action_reset_changes
+                                )
+                            )
+                        },
                         onClick = {
                             showSubMenu = false
                             onResetAction()
@@ -286,7 +363,7 @@ private fun LandEditorFab(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Save Land",
+                    text = stringResource(id = R.string.land_editor_action_save_land),
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -305,7 +382,7 @@ private fun LandEditorFab(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Save Changes",
+                    text = stringResource(id = R.string.land_editor_action_save_changes),
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -492,7 +569,7 @@ private fun ShowDialogs(
     when(uiState){
         is LandEditorStates.EditTitleState ->
             TextEditorDialog(
-                textLabel = "Title",
+                textLabel = stringResource(id = R.string.land_editor_land_title_label),
                 onSubmit = onUpdateTitle,
                 onDismiss = onCancelAction,
                 initialText = uiState.tempTitle
@@ -505,8 +582,10 @@ private fun ShowDialogs(
             )
         is LandEditorStates.NeedLocation ->
             DualTextEditorDialog(
-                textLabel1 = "City",
-                textLabel2 = "Country",
+                initialText1 = uiState.land.title,
+                textLabel1 = stringResource(id = R.string.land_editor_land_title_label),
+                textLabel2 = stringResource(id = R.string.land_editor_land_address_label),
+                textPlaceHolder2 = stringResource(id = R.string.land_editor_land_address_placeholder),
                 properties = DialogProperties(
                     dismissOnClickOutside = false
                 ),
@@ -517,10 +596,10 @@ private fun ShowDialogs(
         else -> {
             if(showNeedSaveDialog){
                 MessageDialog(
-                    title = "Unsaved Changes",
-                    message = "You about to leave without saving any change",
-                    submitText = "Save",
-                    cancelText = "Discard",
+                    title = stringResource(id = R.string.unsaved_changes_label),
+                    message = stringResource(id = R.string.unsaved_changes_text),
+                    submitText = stringResource(id = R.string.save_label),
+                    cancelText = stringResource(id = R.string.discard_label),
                     onSubmit = onSaveAction,
                     onCancel = onBackPress,
                     onDismiss = onNeedSaveDismiss
@@ -546,8 +625,33 @@ private fun PreviewEditorLandNeedLocationScreen(){
 
 @Composable
 @Preview( showBackground = true, showSystemUi = true )
-private fun PreviewEditorLandNormalScreen(){
+private fun PreviewEditorLandNormalScreenDefault(){
     LandEditorScreen( uiState = LandEditorStates.NormalState(Land.emptyLand()) )
+}
+
+@Composable
+@Preview( showBackground = true, showSystemUi = true )
+private fun PreviewEditorLandNormalScreenNewLand(){
+    LandEditorScreen(
+        uiState = LandEditorStates.NormalState(
+            Land.emptyLand().copy(
+                title = "Land"
+            )
+        )
+    )
+}
+
+@Composable
+@Preview( showBackground = true, showSystemUi = true )
+private fun PreviewEditorLandNormalScreenEditLand(){
+    LandEditorScreen(
+        uiState = LandEditorStates.NormalState(
+            Land.emptyLand().copy(
+                id = 1L,
+                title = "Land"
+            )
+        )
+    )
 }
 
 @Composable
@@ -558,8 +662,65 @@ private fun PreviewEditorLandAddPointScreen(){
 
 @Composable
 @Preview( showBackground = true, showSystemUi = true )
-private fun PreviewEditorLandAddBetweenPointScreen(){
+private fun PreviewEditorLandAddBetweenPointScreenDefault(){
     LandEditorScreen( uiState = LandEditorStates.AddBetweenPointState(Land.emptyLand()) )
+}
+
+@Composable
+@Preview( showBackground = true, showSystemUi = true )
+private fun PreviewEditorLandAddBetweenPointScreenSelectedFirst(){
+    LandEditorScreen(
+        uiState = LandEditorStates.AddBetweenPointState(
+            land = Land.emptyLand().copy(
+                border = listOf(
+                    LatLng(0.0, 0.0),
+                    LatLng(1.0, 0.0),
+                    LatLng(1.0, 1.0),
+                    LatLng(0.0, 1.0),
+                )
+            ),
+            startIndex = 0
+        )
+    )
+}
+
+@Composable
+@Preview( showBackground = true, showSystemUi = true )
+private fun PreviewEditorLandAddBetweenPointScreenSelectedSecond(){
+    LandEditorScreen(
+        uiState = LandEditorStates.AddBetweenPointState(
+            land = Land.emptyLand().copy(
+                border = listOf(
+                    LatLng(0.0, 0.0),
+                    LatLng(1.0, 0.0),
+                    LatLng(1.0, 1.0),
+                    LatLng(0.0, 1.0),
+                )
+            ),
+            startIndex = 0,
+            endIndex = 1
+        )
+    )
+}
+
+@Composable
+@Preview( showBackground = true, showSystemUi = true )
+private fun PreviewEditorLandAddBetweenPointScreenPlacedPoint(){
+    LandEditorScreen(
+        uiState = LandEditorStates.AddBetweenPointState(
+            land = Land.emptyLand().copy(
+                border = listOf(
+                    LatLng(0.0, 0.0),
+                    LatLng(1.0, 0.0),
+                    LatLng(1.0, 1.0),
+                    LatLng(0.0, 1.0),
+                )
+            ),
+            startIndex = 0,
+            selectedIndex = 1,
+            endIndex = 2,
+        )
+    )
 }
 
 @Composable
@@ -570,8 +731,26 @@ private fun PreviewEditorLandDeletePointScreen(){
 
 @Composable
 @Preview( showBackground = true, showSystemUi = true )
-private fun PreviewEditorLandEditPointScreen(){
+private fun PreviewEditorLandEditPointScreenDefault(){
     LandEditorScreen( uiState = LandEditorStates.EditPointState(Land.emptyLand()) )
+}
+
+@Composable
+@Preview( showBackground = true, showSystemUi = true )
+private fun PreviewEditorLandEditPointScreenSelectedPoint(){
+    LandEditorScreen(
+        uiState = LandEditorStates.EditPointState(
+            land = Land.emptyLand().copy(
+                border = listOf(
+                    LatLng(0.0, 0.0),
+                    LatLng(1.0, 0.0),
+                    LatLng(1.0, 1.0),
+                    LatLng(0.0, 1.0),
+                )
+            ),
+            selectedIndex = 0
+        )
+    )
 }
 
 @Composable

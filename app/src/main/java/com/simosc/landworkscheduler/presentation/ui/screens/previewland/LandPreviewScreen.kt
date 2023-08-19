@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -35,6 +36,7 @@ import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.core.config.DefaultMapTarget
 import com.simosc.landworkscheduler.core.config.DefaultMapZoom
 import com.simosc.landworkscheduler.core.config.DefaultMapItemFillAlpha
@@ -110,16 +112,20 @@ private fun LandPreviewScreenTopBar(
     var showNavigationMenu by remember {
         mutableStateOf(false)
     }
-    val title = remember(uiState){
-        when(uiState){
-            is LandPreviewStates.Loaded ->
-                "#${uiState.land.id} ${uiState.land.title}"
-            else ->
-                "Loading"
-        }
-    }
     DefaultTopAppBar(
-        title = "Land Preview: $title",
+        title = stringResource(
+            id = R.string.land_preview_title_default
+        ),
+        subTitle = if(uiState is LandPreviewStates.Loaded)
+            stringResource(
+                id = R.string.land_preview_subtitle_loaded,
+                uiState.land.id,
+                uiState.land.title
+            )
+        else
+            stringResource(
+                id = R.string.land_preview_subtitle_default
+            ),
         navigationIcon = {
             IconButton(
                 onClick = {
@@ -128,7 +134,7 @@ private fun LandPreviewScreenTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack ,
-                    contentDescription = "Navigate Back"
+                    contentDescription = stringResource(id = R.string.navigate_back_label)
                 )
             }
         },
@@ -136,25 +142,16 @@ private fun LandPreviewScreenTopBar(
             if(uiState is LandPreviewStates.Loaded) {
                 IconButton(
                     onClick = {
-                        showNavigationMenu = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Menu,
-                        contentDescription = "Actions DropDownMenu"
-                    )
-                }
-                IconButton(
-                    onClick = {
                         showActionsMenu = true
                     }
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Edit,
-                        contentDescription = "Edit DropDownMenu"
+                        contentDescription = stringResource(
+                            id = R.string.land_preview_action_open_edit_menu
+                        )
                     )
                 }
-
                 DropdownMenu(
                     expanded = showActionsMenu,
                     onDismissRequest = { showActionsMenu = false }
@@ -162,7 +159,9 @@ private fun LandPreviewScreenTopBar(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = "Edit Land"
+                                text = stringResource(
+                                    id = R.string.land_preview_action_edit_land
+                                )
                             )
                         },
                         leadingIcon = {
@@ -176,7 +175,9 @@ private fun LandPreviewScreenTopBar(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = "Delete Lands"
+                                text = stringResource(
+                                    id = R.string.land_preview_action_delete_land
+                                )
                             )
                         },
                         leadingIcon = {
@@ -188,6 +189,19 @@ private fun LandPreviewScreenTopBar(
                         onClick = onDeleteLandPress
                     )
                 }
+
+                IconButton(
+                    onClick = {
+                        showNavigationMenu = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Menu,
+                        contentDescription = stringResource(
+                            id = R.string.land_preview_action_open_navigation_menu
+                        )
+                    )
+                }
                 DropdownMenu(
                     expanded = showNavigationMenu,
                     onDismissRequest = { showNavigationMenu = false }
@@ -195,7 +209,9 @@ private fun LandPreviewScreenTopBar(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = "Land Zones"
+                                text = stringResource(
+                                    id = R.string.land_preview_action_navigate_to_land_zones
+                                )
                             )
                         },
                         leadingIcon = {
@@ -209,7 +225,9 @@ private fun LandPreviewScreenTopBar(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = "Land Notes"
+                                text = stringResource(
+                                    id = R.string.land_preview_action_navigate_to_land_notes
+                                )
                             )
                         },
                         leadingIcon = {
@@ -236,11 +254,14 @@ private fun LandPreviewScreenContent(
 
     if(showDialog){
         MessageDialog(
-            title = "Delete Land",
-            message = "Are you sure you want to delete the land:\n" +
-                    "#${uiState.land.id} ${uiState.land.title}",
-            submitText = "Delete",
-            cancelText = "Cancel",
+            title = stringResource(id = R.string.land_preview_delete_dialog_label),
+            message = stringResource(
+                id = R.string.land_preview_delete_dialog_text,
+                uiState.land.id,
+                uiState.land.title
+            ),
+            submitText = stringResource(id = R.string.delete_label),
+            cancelText = stringResource(id = R.string.cancel_label),
             titleColor = MaterialTheme.colorScheme.error,
             submitColor = MaterialTheme.colorScheme.error,
             onSubmit = onSubmitDialog,
@@ -330,6 +351,8 @@ private fun PreviewLandPreviewScreenLoaded(){
     LandPreviewScreen(
         uiState = LandPreviewStates.Loaded(
             land = Land.emptyLand().copy(
+                id = 1L,
+                title = "Land Title",
                 border = listOf(
                     LatLng( 0.0 , 0.0)
                 )
@@ -344,6 +367,8 @@ private fun PreviewLandPreviewScreenLoadedDeleteDialog(){
     LandPreviewScreen(
         uiState = LandPreviewStates.Loaded(
             land = Land.emptyLand().copy(
+                id = 1L,
+                title = "Land Title",
                 border = listOf(
                     LatLng( 0.0 , 0.0)
                 )

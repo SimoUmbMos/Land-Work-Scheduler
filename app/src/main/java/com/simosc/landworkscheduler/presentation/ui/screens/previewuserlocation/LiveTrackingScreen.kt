@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,6 +44,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
+import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.core.config.DefaultMapItemFillAlpha
 import com.simosc.landworkscheduler.core.config.DefaultMapItemStrokeAlpha
 import com.simosc.landworkscheduler.domain.extension.toLatLng
@@ -66,14 +68,14 @@ fun LiveTrackingScreen(
     Scaffold(
         topBar = {
             DefaultTopAppBar(
-                title = "Live Tracking Screen",
+                title = stringResource(id = R.string.live_tracking_title_default),
                 navigationIcon = {
                     IconButton(
                         onClick = onBackPress
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Navigate Back Button"
+                            contentDescription = stringResource(id = R.string.navigate_back_label)
                         )
                     }
                 }
@@ -104,7 +106,7 @@ fun LiveTrackingScreen(
                         LoadingContentComponent(
                             modifier = Modifier
                                 .fillMaxSize(),
-                            text = "Waiting Location..."
+                            text = stringResource(id = R.string.live_tracking_content_waiting_location)
                         )
 
                     is LiveTrackingStates.ReadyState ->
@@ -122,7 +124,7 @@ fun LiveTrackingScreen(
                                 LoadingContentComponent(
                                     modifier = Modifier
                                         .fillMaxSize(),
-                                    text = "Waiting Location..."
+                                    text = stringResource(id = R.string.live_tracking_content_waiting_location)
                                 )
                             }
 
@@ -158,11 +160,11 @@ private fun ErrorScreenContent(
             modifier = Modifier.fillMaxWidth(),
             text = when (uiState) {
                 LiveTrackingStates.ErrorState.NeedPermissionState ->
-                    "Need permission"
+                    stringResource(id = R.string.live_tracking_error_need_location_permission)
                 LiveTrackingStates.ErrorState.NeedProviderState ->
-                    "Need provider"
+                    stringResource(id = R.string.live_tracking_error_need_location_provider)
                 LiveTrackingStates.ErrorState.LocationErrorState ->
-                    "Something went wrong"
+                    stringResource(id = R.string.live_tracking_error_cant_get_location)
             },
             textAlign = TextAlign.Center
         )
@@ -173,7 +175,9 @@ private fun ErrorScreenContent(
                     onClick = onAskLocationPermission
                 ) {
                     Text(
-                        text = "Show Permissions"
+                        text = stringResource(
+                            id = R.string.live_tracking_error_button_need_location_permission
+                        )
                     )
                 }
             LiveTrackingStates.ErrorState.NeedProviderState ->
@@ -182,7 +186,9 @@ private fun ErrorScreenContent(
                     onClick = onOpenLocationProviderSettings
                 ) {
                     Text(
-                        text = "To Settings"
+                        text = stringResource(
+                            id = R.string.live_tracking_error_button_need_location_provider
+                        )
                     )
                 }
             else ->
@@ -191,7 +197,9 @@ private fun ErrorScreenContent(
                     onClick = onStartLocationUpdates
                 ) {
                     Text(
-                        text = "Try again"
+                        text = stringResource(
+                            id = R.string.live_tracking_error_button_cant_get_location
+                        )
                     )
                 }
         }
@@ -335,9 +343,6 @@ private fun UserLocationMap(
 private fun InfoCard(
     uiState: LiveTrackingStates.ReadyState.InsideLandState
 ) {
-    val title = remember(uiState){
-        "#${uiState.currentLand.id} ${uiState.currentLand.title}"
-    }
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -351,7 +356,11 @@ private fun InfoCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            text = title,
+            text = stringResource(
+                id = R.string.live_tracking_card_land_label,
+                uiState.currentLand.id,
+                uiState.currentLand.title
+            ),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.titleMedium,
             maxLines = 1,
@@ -364,9 +373,6 @@ private fun InfoCard(
 private fun InfoCard(
     uiState: LiveTrackingStates.ReadyState.InsideZoneState
 ) {
-    val title = remember(uiState){
-        "#${uiState.currentZone.id} ${uiState.currentZone.title}"
-    }
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -380,7 +386,11 @@ private fun InfoCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            text = title,
+            text = stringResource(
+                id = R.string.live_tracking_card_zone_label,
+                uiState.currentZone.id,
+                uiState.currentZone.title
+            ),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.titleMedium,
             maxLines = 1,
@@ -393,12 +403,7 @@ private fun InfoCard(
 private fun InfoCard(
     uiState: LiveTrackingStates.ReadyState.InsideNoteState
 ) {
-    val title = remember(uiState){
-        "#${uiState.currentNote.id} ${uiState.currentNote.title}"
-    }
-    val desc = remember(uiState){
-        uiState.currentNote.desc
-    }
+
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -416,7 +421,11 @@ private fun InfoCard(
             Text(
                 modifier = Modifier
                     .fillMaxWidth(),
-                text = title,
+                text = stringResource(
+                    id = R.string.live_tracking_card_note_label,
+                    uiState.currentNote.id,
+                    uiState.currentNote.title
+                ),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
@@ -426,7 +435,7 @@ private fun InfoCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
-                text = desc,
+                text = uiState.currentNote.desc,
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 3,

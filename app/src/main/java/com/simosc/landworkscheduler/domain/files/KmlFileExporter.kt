@@ -10,4 +10,7 @@ interface KmlFileExporter {
         outputStream: OutputStream
     ): Boolean
 
+    companion object{
+        const val MimeType: String = "application/vnd.google-earth.kml+xml"
+    }
 }

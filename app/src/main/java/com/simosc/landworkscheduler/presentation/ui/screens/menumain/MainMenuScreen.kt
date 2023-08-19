@@ -27,9 +27,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.presentation.ui.components.topbar.DefaultTopAppBar
 
 
@@ -45,13 +47,17 @@ fun MainMenuScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             DefaultTopAppBar(
-                title = "Land Work Scheduler",
+                title = stringResource(id = R.string.main_menu_title_default),
                 subTitle = if(uiState is MainMenuStates.Loaded)
-                        when(uiState.todayWorksCount) {
-                            in Long.MIN_VALUE .. 0L -> "No scheduled jobs for today"
-                            1L -> "1 scheduled job for today"
-                            in 1000 .. Long.MAX_VALUE -> "999+ scheduled jobs for today"
-                            else -> "${uiState.todayWorksCount} scheduled jobs for today"
+                        when {
+                            uiState.todayWorksCount <= 0L ->
+                                stringResource(id = R.string.main_menu_subtitle_default)
+                            uiState.todayWorksCount == 1L ->
+                                stringResource(id = R.string.main_menu_subtitle_single)
+                            uiState.todayWorksCount >= 1000L ->
+                                stringResource(id = R.string.main_menu_subtitle_max)
+                            else ->
+                                stringResource(id = R.string.main_menu_subtitle_multiple, uiState.todayWorksCount)
                         }
                     else
                         null,
@@ -68,7 +74,7 @@ fun MainMenuScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = stringResource(id = R.string.main_menu_action_navigate_to_settings)
                         )
                     }
                 }
@@ -107,7 +113,8 @@ private fun MainMenuLoadedScreenContent(
                     start = Offset.Zero,
                     end = Offset.Infinite
                 )
-            ).padding(
+            )
+            .padding(
                 horizontal = 16.dp,
                 vertical = 8.dp
             ),
@@ -165,7 +172,7 @@ private fun MainMenuLandsCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentSize(align = Alignment.Center),
-                    text = "Lands",
+                    text = stringResource(id = R.string.main_menu_button_navigate_to_lands_menu),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleLarge
                 )
@@ -206,7 +213,7 @@ private fun MainMenuSchedulesCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentSize(align = Alignment.Center),
-                    text = "Schedules",
+                    text = stringResource(id = R.string.main_menu_button_navigate_to_works_menu),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleLarge
                 )
@@ -247,7 +254,7 @@ private fun MainMenuTrackingCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentSize(align = Alignment.Center),
-                    text = "Location Tracking",
+                    text = stringResource(id = R.string.main_menu_button_navigate_to_location_tracking_screen),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.titleLarge
                 )

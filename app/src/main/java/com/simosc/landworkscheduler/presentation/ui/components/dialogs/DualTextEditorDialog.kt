@@ -18,14 +18,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.simosc.landworkscheduler.R
 
 @Preview
 @Composable
-private fun PreviewTextEditorDialog(){
+private fun PreviewTextEditorDialogDefault(){
+    DualTextEditorDialog(
+        onSubmit = {_,_ ->},
+        onDismiss = {}
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewTextEditorDialogWithData(){
     DualTextEditorDialog(
         textLabel1 = "Title1",
         initialText1 = "Mock Text",
@@ -48,7 +59,7 @@ fun DualTextEditorDialog(
     onSubmit: (String, String) -> Unit,
     onDismiss: () -> Unit,
     runDismissOnSubmit: Boolean = false,
-    submitButtonText: String = "Submit"
+    submitButtonText: String? = null
 ){
     var text1 by remember(initialText1){
         mutableStateOf(initialText1)
@@ -116,7 +127,12 @@ fun DualTextEditorDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    Text(text = submitButtonText.ifBlank { "Submit" })
+
+                    Text(
+                        text = submitButtonText?.ifBlank {
+                            stringResource(R.string.submit_label)
+                        }?: stringResource(R.string.submit_label)
+                    )
                 }
             }
         }

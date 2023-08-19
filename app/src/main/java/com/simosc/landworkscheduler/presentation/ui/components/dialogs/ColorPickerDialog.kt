@@ -21,9 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.simosc.landworkscheduler.R
 
 @Preview
 @Composable
@@ -53,13 +55,17 @@ fun ColorPickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().height(64.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
                     shape = RoundedCornerShape(8.dp),
                     color = selectedColor,
                     content = {}
                 )
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ){
                     Color(0xFFD32F2F).let{ color ->
@@ -114,7 +120,9 @@ fun ColorPickerDialog(
                     }
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ){
                     Color(0xFF2196F3).let{ color ->
@@ -169,7 +177,9 @@ fun ColorPickerDialog(
                     }
                 }
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ){
                     Color(0xFFCDDC39).let{ color ->
@@ -224,13 +234,15 @@ fun ColorPickerDialog(
                     }
                 }
                 Button(
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
                     onClick = {
                         onSubmitPress(selectedColor)
                         if(runDismissOnSubmit) onDismissDialog()
                     }
                 ) {
-                    Text(text = "Done")
+                    Text(text = stringResource(R.string.done_label))
                 }
             }
         }

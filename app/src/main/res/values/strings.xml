@@ -1,18 +1,146 @@
 <resources>
-    <string name="app_name">Land Work Scheduler</string>
-
     <!-- common -->
+    <string name="app_name">Land Work Scheduler</string>
+    <string name="navigate_back_label">Go Back</string>
+    <string name="done_label">Done</string>
+    <string name="save_label">Save</string>
+    <string name="submit_label">Submit</string>
+    <string name="discard_label">Discard</string>
+    <string name="delete_label">Delete</string>
+    <string name="cancel_label">Cancel</string>
+    <string name="unsaved_changes_label">Unsaved Changes</string>
+    <string name="unsaved_changes_text">You about to leave without saving any change</string>
+    <string name="loading_data_label">Loading Data…</string>
+    <string name="map_is_loading_label">Map is loading…</string>
+    <string name="search_placeholder">Search…</string>
+    <string name="search_clear_close_label">Clear / Close Search</string>
+    <string name="search_label">Search</string>
 
     <!-- main menu -->
+        <!-- titles strings -->
+        <string name="main_menu_title_default">Land Work Scheduler</string>
+        <!-- sub titles strings -->
+        <string name="main_menu_subtitle_default">No scheduled jobs for today</string>
+        <string name="main_menu_subtitle_single">1 scheduled job for today</string>
+        <string name="main_menu_subtitle_multiple">%1$d scheduled jobs for today</string>
+        <string name="main_menu_subtitle_max">999+ scheduled jobs for today</string>
+        <!-- actions strings -->
+        <string name="main_menu_action_navigate_to_settings">Settings</string>
+        <!-- buttons strings -->
+        <string name="main_menu_button_navigate_to_lands_menu">Lands</string>
+        <string name="main_menu_button_navigate_to_works_menu">Works</string>
+        <string name="main_menu_button_navigate_to_location_tracking_screen">Location Tracking</string>
 
     <!-- lands menu -->
+        <!-- titles strings -->
+        <string name="land_menu_title_default">My Lands</string>
+        <string name="land_menu_title_export_lands">Select Lands To Export</string>
+        <string name="land_menu_title_delete_lands">Select Lands To Delete</string>
+        <!-- subtitles strings -->
+        <string name="land_menu_subtitles_search">Search: %1$s</string>
+        <!-- actions strings -->
+        <string name="land_menu_action_export_lands">Export Lands</string>
+        <string name="land_menu_action_delete_lands">Delete Lands</string>
+        <string name="land_menu_action_create_land">Create New Land</string>
+        <string name="land_menu_action_export_lands_execute">Export Selected Lands</string>
+        <string name="land_menu_action_delete_lands_execute">Delete Selected Lands</string>
+        <!-- contents strings -->
+        <string name="land_menu_content_cant_find_any_land">Can\'t find any land</string>
+        <string name="land_menu_content_empty_list">Add new land</string>
+        <string name="land_menu_content_is_searching_lands">Searching Lands…</string>
+        <string name="land_menu_content_is_exporting_lands">Exporting Lands…</string>
+        <string name="land_menu_content_is_deleting_lands">Deleting Lands…</string>
+        <string name="land_menu_content_is_action_executing">Action is running…</string>
+        <!-- list items strings -->
+        <string name="land_menu_list_item_land_id">#%1$d</string>
+        <string name="land_menu_list_item_land_title">%1$s</string>
+        <string name="land_menu_list_item_land_border_empty">Land border is empty</string>
+        <!-- errors strings -->
+    <string name="land_menu_error_cant_save_file">File did not save, try again</string>
+    <string name="land_menu_error_wait_action_to_finish">Please wait the action to finish</string>
+        <!-- exporter strings -->
+        <string name="land_menu_export_file_name">exported_lands_%1$d%2$d%3$d_%4$d%5$d%6$d_%7$d</string>
 
     <!-- land preview -->
+        <!-- titles strings -->
+        <string name="land_preview_title_default">Land Preview</string>
+        <!-- subtitle strings -->
+        <string name="land_preview_subtitle_default">Loading Land…</string>
+        <string name="land_preview_subtitle_loaded">#%1$d %2$s</string>
+        <!-- actions strings -->
+        <string name="land_preview_action_open_navigation_menu">Navigation Actions Menu</string>
+        <string name="land_preview_action_navigate_to_land_zones">Land Zones</string>
+        <string name="land_preview_action_navigate_to_land_notes">Land Notes</string>
+        <string name="land_preview_action_open_edit_menu">Edit Actions Menu</string>
+        <string name="land_preview_action_edit_land">Edit Land</string>
+        <string name="land_preview_action_delete_land">Delete Land</string>
+        <!-- dialog strings -->
+        <string name="land_preview_delete_dialog_label">Delete Land</string>
+        <string name="land_preview_delete_dialog_text">Are you sure you want to delete the land:\n#%1$d %2$s</string>
 
     <!-- land editor -->
+        <!-- titles strings -->
+        <string name="land_editor_title_default">Land Editor</string>
+        <!-- subtitles strings -->
+        <string name="land_editor_subtitle_new_land_default">%1$s</string>
+        <string name="land_editor_subtitle_edit_land_default">#%1$d %2$s</string>
+        <string name="land_editor_subtitle_select_location">Select Location</string>
+        <string name="land_editor_subtitle_change_land_title">Select New Land Title</string>
+        <string name="land_editor_subtitle_change_land_color">Select New Land Color</string>
+        <string name="land_editor_subtitle_edit_points_select_point">Select Point</string>
+        <string name="land_editor_subtitle_edit_points_edit_selected_point">Place Point</string>
+        <string name="land_editor_subtitle_delete_points">Delete Points</string>
+        <string name="land_editor_subtitle_add_point_between_select_first_point">Select First Point</string>
+        <string name="land_editor_subtitle_add_point_between_select_second_point">Select Second Point</string>
+        <string name="land_editor_subtitle_add_point_between_place_new_point">Place New Point</string>
+        <string name="land_editor_subtitle_add_point_between_edit_placed_point">Edit Placed Point</string>
+        <string name="land_editor_subtitle_add_points">Add Points</string>
+        <!-- addresses strings -->
+        <string name="land_editor_land_address_label">Land Address</string>
+        <string name="land_editor_land_address_placeholder">Address City, Country</string>
+        <string name="land_editor_waiting_land_address">Waiting Address…</string>
+        <!-- labels strings -->
+        <string name="land_editor_land_title_label">Land Title</string>
+        <!-- actions strings -->
+        <string name="land_editor_action_show_menu">Show Menu</string>
+        <string name="land_editor_action_add_points">Add Points</string>
+        <string name="land_editor_action_add_points_between_points">Add Point Between Points</string>
+        <string name="land_editor_action_delete_points">Delete Points</string>
+        <string name="land_editor_action_edit_points">Edit Points</string>
+        <string name="land_editor_action_change_title">Change Title</string>
+        <string name="land_editor_action_change_color">Change Color</string>
+        <string name="land_editor_action_reset_changes">Reset Changes</string>
+        <string name="land_editor_action_save_changes">Save Changes</string>
+        <string name="land_editor_action_save_land">Save Land</string>
+        <!-- errors strings -->
+        <string name="land_editor_error_land_address_is_not_found">Can\'t find the give address</string>
+        <string name="land_editor_error_land_border_is_empty">Land border is empty</string>
+        <string name="land_editor_error_land_title_is_empty">Land title is empty</string>
+        <string name="land_editor_error_land_save_error">Something went wrong saving the land, try again</string>
 
     <!-- land notes menu -->
 
+    <!-- land notes preview -->
+
+    <!-- land notes editor -->
+
     <!-- user location tracking -->
+        <!-- titles strings -->
+        <string name="live_tracking_title_default">Live Tracking Screen</string>
+        <!-- content strings -->
+        <string name="live_tracking_content_waiting_location">Waiting Location…</string>
+        <!-- cards strings -->
+        <string name="live_tracking_card_land_label">#%1$d %2$s</string>
+        <string name="live_tracking_card_zone_label">#%1$d %2$s</string>
+        <string name="live_tracking_card_note_label">#%1$d %2$s</string>
+        <!-- errors strings -->
+        <string name="live_tracking_error_need_location_permission">Need location permission</string>
+        <string name="live_tracking_error_need_location_provider">GPS is off</string>
+        <string name="live_tracking_error_cant_get_location">Can\'t get current location</string>
+        <!-- errors buttons strings -->
+        <string name="live_tracking_error_button_need_location_permission">Show Location Permissions</string>
+        <string name="live_tracking_error_button_need_location_provider">Go to GPS Settings</string>
+        <string name="live_tracking_error_button_cant_get_location">Try Again</string>
+
 
 </resources>
