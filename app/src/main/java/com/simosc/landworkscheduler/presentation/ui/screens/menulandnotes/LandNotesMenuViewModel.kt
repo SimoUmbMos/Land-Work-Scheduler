@@ -2,6 +2,7 @@ package com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simosc.landworkscheduler.core.config.DefaultSearchDebounce
 import com.simosc.landworkscheduler.domain.extension.tokenizedSearchIn
 import com.simosc.landworkscheduler.domain.extension.trimWithSingleWhitespaces
 import com.simosc.landworkscheduler.domain.usecase.land.GetLand
@@ -31,63 +32,52 @@ class LandNotesMenuViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        stopAllSync()
+        stopSync()
     }
 
-    private var landSyncJob: Job? = null
-    private var notesSyncJob: Job? = null
+    private var syncJob: Job? = null
 
+    private val _landId: MutableStateFlow<Long> =
+        MutableStateFlow(0L)
+    private val _data: MutableStateFlow<LandNotesMenuStates> =
+        MutableStateFlow(LandNotesMenuStates.LoadingState)
     private val _searchQuery: MutableStateFlow<String> =
         MutableStateFlow("")
-    private val _isSearchLoading: MutableStateFlow<Boolean> =
+    private val _isSearching: MutableStateFlow<Boolean> =
         MutableStateFlow(false)
-    private val _dataState: MutableStateFlow<LandNotesMenuStates> =
-        MutableStateFlow(LandNotesMenuStates.LoadingState)
-
-    private fun stopAllSync(){
-        landSyncJob?.let {
-            it.cancel()
-            landSyncJob = null
-        }
-        notesSyncJob?.let {
-            it.cancel()
-            notesSyncJob = null
-        }
-    }
-
-    private fun stopNotesSync(){
-        notesSyncJob?.let {
-            it.cancel()
-            notesSyncJob = null
-        }
-    }
 
     val searchQuery: StateFlow<String> =
         _searchQuery.asStateFlow()
-    val isSearchLoading: StateFlow<Boolean> =
-        _isSearchLoading.asStateFlow()
+    val isSearching: StateFlow<Boolean> =
+        _isSearching.asStateFlow()
 
     @OptIn(FlowPreview::class)
     val uiState: StateFlow<LandNotesMenuStates> = _searchQuery
-        .debounce { query ->
-            if(query.isNotBlank()) 1500L
-            else 0L
-        }
         .onEach {
-            _isSearchLoading.update { true }
+            _isSearching.update { true }
         }
-        .combine(_dataState){ query, state ->
-            if(state is LandNotesMenuStates.LoadedState && query.isNotBlank())
-                state.copy(
-                    notes = state.notes.filter {
-                        query.tokenizedSearchIn("#${it.id} ${it.title}\n${it.desc}")
+        .debounce { query ->
+            if(query.isNotBlank())
+                DefaultSearchDebounce
+            else
+                0L
+        }
+        .combine(_data){ query, data ->
+            if(data is LandNotesMenuStates.LoadedState){
+                LandNotesMenuStates.LoadedState(
+                    land = data.land,
+                    notes = data.notes.filter {
+                        query.tokenizedSearchIn(
+                            "#${it.id} ${it.id}# ${it.title} ${it.desc}"
+                        )
                     }
                 )
-            else
-                state
+            }else{
+                data
+            }
         }
         .onEach {
-            _isSearchLoading.update { false }
+            _isSearching.update { false }
         }
         .stateIn(
             viewModelScope,
@@ -96,29 +86,42 @@ class LandNotesMenuViewModel @Inject constructor(
         )
 
 
-    fun startSync(lid: Long){
-        stopAllSync()
-        landSyncJob = getLandUseCase(lid).onEach {
-            it?.let { land ->
-                stopNotesSync()
-                notesSyncJob = getLandNotesUseCase(lid).onEach { notes ->
-                    _dataState.update {
+    private fun stopSync(){
+        syncJob?.let {
+            it.cancel()
+            syncJob = null
+        }
+    }
+
+    private fun startSync(){
+        stopSync()
+        _landId.value.let{ lid ->
+            syncJob = combine(
+                getLandUseCase(lid),
+                getLandNotesUseCase(lid)
+            ){ land, notes ->
+                land?.let {
+                    _data.update {
                         LandNotesMenuStates.LoadedState(
-                            land = land,
-                            notes = notes
+                            land = land.copy(),
+                            notes = notes.toList()
                         )
                     }
-                }.launchIn(CoroutineScope(Dispatchers.IO))
-            }?: _dataState.update { LandNotesMenuStates.CantInit }
-        }.launchIn(CoroutineScope(Dispatchers.IO))
-
+                }?:run{
+                    _data.update {
+                        LandNotesMenuStates.CantInit
+                    }
+                }
+            }.launchIn(CoroutineScope(Dispatchers.IO))
+        }
     }
 
-    fun onSearchChange(query: String){
-        if(query.isNotBlank())
-            _searchQuery.update {query.trimWithSingleWhitespaces()}
-        else
-            _searchQuery.update {""}
+    fun setLandId(lid: Long){
+        _landId.update { if(lid > 0L) lid else 0L }
+        startSync()
     }
 
+    fun onSearchQueryUpdate(newQuery: String){
+        _searchQuery.update { newQuery.trimWithSingleWhitespaces().ifBlank { "" } }
+    }
 }

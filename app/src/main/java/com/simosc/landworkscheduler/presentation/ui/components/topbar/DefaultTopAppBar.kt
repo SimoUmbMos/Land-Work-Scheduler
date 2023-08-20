@@ -27,12 +27,12 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun DefaultTopAppBar(
     modifier: Modifier = Modifier,
+    navigationIcon: @Composable () -> Unit = {},
+    actions: @Composable (RowScope.() -> Unit) = {},
     title: String,
     subTitle: String? = null,
     titleColor: Color? = null,
     subTitleColor: Color? = null,
-    navigationIcon: @Composable () -> Unit = {},
-    actions: @Composable (RowScope.() -> Unit) = {},
 ){
     TopAppBar(
         modifier = modifier,

@@ -12,9 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.twotone.KeyboardArrowRight
-import androidx.compose.material.icons.twotone.LocationOn
-import androidx.compose.material.icons.twotone.DateRange
-import androidx.compose.material.icons.twotone.List
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -27,7 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -180,7 +179,7 @@ private fun MainMenuLandsCard(
             leadingContent = {
                 Icon(
                     modifier = Modifier.size(64.dp),
-                    imageVector = Icons.TwoTone.List,
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_lands),
                     contentDescription = null,
                 )
             },
@@ -221,7 +220,7 @@ private fun MainMenuSchedulesCard(
             leadingContent = {
                 Icon(
                     modifier = Modifier.size(64.dp),
-                    imageVector = Icons.TwoTone.DateRange,
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_works),
                     contentDescription = null,
                 )
             },
@@ -262,7 +261,7 @@ private fun MainMenuTrackingCard(
             leadingContent = {
                 Icon(
                     modifier = Modifier.size(64.dp),
-                    imageVector = Icons.TwoTone.LocationOn,
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_my_location),
                     contentDescription = null,
                 )
             },

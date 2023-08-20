@@ -1,9 +1,8 @@
-package com.simosc.landworkscheduler.presentation.activity
+package com.simosc.landworkscheduler.presentation.activities
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -38,18 +37,17 @@ class MainActivity : ComponentActivity() {
         MapsInitializer.initialize(this)
         setContent {
             LandWorkSchedulerTheme{
-                val surface = MaterialTheme.colorScheme.surface
+                val background = MaterialTheme.colorScheme.background
                 val systemUiController = rememberSystemUiController()
                 val useDarkIcons = !isSystemInDarkTheme()
                 val navController = rememberNavController()
                 Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(surface),
+                    modifier = Modifier.fillMaxSize(),
+                    color = background
                 ){
                     SideEffect {
                         systemUiController.setStatusBarColor(
-                            color = surface,
+                            color = background,
                             darkIcons = useDarkIcons
                         )
                     }

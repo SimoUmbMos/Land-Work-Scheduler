@@ -1,5 +1,6 @@
 package com.simosc.landworkscheduler.presentation.ui.navigation
 
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
@@ -18,7 +19,9 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
 import com.simosc.landworkscheduler.R
 import com.simosc.landworkscheduler.core.config.DefaultAnimationDelayDurationMillis
+import com.simosc.landworkscheduler.domain.extension.getLand
 import com.simosc.landworkscheduler.domain.files.KmlFileExporter
+import com.simosc.landworkscheduler.presentation.activities.KmlReaderActivity
 import com.simosc.landworkscheduler.presentation.ui.screens.editorland.LandEditorScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.editorland.LandEditorViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandNoteEditorScreen
@@ -180,6 +183,14 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             val viewModel = hiltViewModel<LandEditorViewModel>()
             val uiState by viewModel.uiState.collectAsState()
             val error by viewModel.error.collectAsState(initial = null)
+            val ctx = LocalContext.current
+            val startImportActivity = rememberLauncherForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ){
+                it.data?.getLand("export_land")?.let{ land ->
+                    viewModel.onImportLand(land)
+                }
+            }
             LandEditorScreen(
                 uiState = uiState,
                 cameraPositionState = viewModel.cameraPositionState,
@@ -198,6 +209,11 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 onSubmitAction = viewModel::onSubmitAction,
                 onCancelAction = viewModel::onCancelAction,
                 onResetAction = viewModel::onResetAction,
+                onImportFromFile = {
+                    startImportActivity.launch(
+                        Intent(ctx,KmlReaderActivity::class.java)
+                    )
+                },
                 onSaveAction = {
                     coroutineScope.launch {
                         if(viewModel.onSaveLand())
@@ -220,17 +236,17 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
         ){
             val viewModel = hiltViewModel<LandNotesMenuViewModel>()
             val searchQuery by viewModel.searchQuery.collectAsState()
-            val isSearchLoading by viewModel.isSearchLoading.collectAsState()
+            val isSearching by viewModel.isSearching.collectAsState()
             val uiState by viewModel.uiState.collectAsState()
             LandNotesMenuScreen(
                 uiState = uiState,
                 searchQuery = searchQuery,
-                isSearchLoading = isSearchLoading,
+                isSearching = isSearching,
                 onBackPress = {
                     navController.popBackStack()
                 },
                 onSearchChange = { newQuery ->
-                    viewModel.onSearchChange(newQuery)
+                    viewModel.onSearchQueryUpdate(newQuery)
                 },
                 onNewNoteClick = { land ->
                     TODO()
@@ -240,7 +256,7 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 }
             )
             LaunchedEffect(Unit){
-                viewModel.startSync(it.arguments!!.getLong("lid"))
+                viewModel.setLandId(it.arguments!!.getLong("lid"))
             }
         }
 

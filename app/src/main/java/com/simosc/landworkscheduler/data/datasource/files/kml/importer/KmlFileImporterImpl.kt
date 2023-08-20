@@ -49,7 +49,9 @@ class KmlFileImporterImpl(
                 }
                 eventType = parser.next()
             }
-        } catch (ignore: Exception){}
+        } catch (e: Exception){
+            throw e
+        }
 
         debugPrint(styles.toList(),placemarks.toList())
         return getAllLands(

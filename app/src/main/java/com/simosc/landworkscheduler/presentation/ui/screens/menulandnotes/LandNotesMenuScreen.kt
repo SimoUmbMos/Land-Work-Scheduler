@@ -69,7 +69,7 @@ import kotlinx.coroutines.launch
 fun LandNotesMenuScreen(
     uiState: LandNotesMenuStates,
     searchQuery: String = "",
-    isSearchLoading: Boolean = false,
+    isSearching: Boolean = false,
     isSearchOpenInitValue: Boolean = false,
     onBackPress: () -> Unit = {},
     onSearchChange: (String) -> Unit = {},
@@ -125,7 +125,7 @@ fun LandNotesMenuScreen(
                     .padding(padding)
             ) {
                 when{
-                    uiState is LandNotesMenuStates.LoadedState && isSearchLoading ->
+                    uiState is LandNotesMenuStates.LoadedState && isSearching ->
                         LoadingContentComponent(text = "Searching..")
 
                     uiState is LandNotesMenuStates.LoadedState ->
@@ -488,7 +488,7 @@ private fun PreviewLandNotesMenuScreenNoSearchStateSearchLoading(){
             notes = notes
         ),
         isSearchOpenInitValue = true,
-        isSearchLoading = true
+        isSearching = true
     )
 }
 

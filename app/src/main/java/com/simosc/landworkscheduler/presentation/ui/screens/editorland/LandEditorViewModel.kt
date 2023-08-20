@@ -315,5 +315,74 @@ class LandEditorViewModel @Inject constructor(
             }
         }
     }
+
+    fun onImportLand(land: Land) {
+        _uiState.update { state ->
+            when(state){
+                is LandEditorStates.NeedLocation -> {
+                    land.border.toLatLngBounds()?.let{ bounds ->
+                        viewModelScope.launch(Dispatchers.Main){
+                            cameraPositionState.move(
+                                CameraUpdateFactory.newLatLngBounds(
+                                    bounds,
+                                    128
+                                )
+                            )
+                        }
+                        LandEditorStates.NormalState(
+                            land = state.land,
+                            newTitle = land.title,
+                            newColor = land.color.copy(),
+                            newBorder = land.border.toList(),
+                            newHoles = land.holes.toList(),
+                        )
+                    }?: state
+                }
+
+                is LandEditorStates.NormalState -> {
+                    land.border.toLatLngBounds()?.let{ bounds ->
+                        viewModelScope.launch(Dispatchers.Main){
+                            cameraPositionState.move(
+                                CameraUpdateFactory.newLatLngBounds(
+                                    bounds,
+                                    128
+                                )
+                            )
+                        }
+                    }
+                    LandEditorStates.NormalState(
+                        land = state.land,
+                        newTitle = land.title,
+                        newColor = land.color.copy(),
+                        newBorder = land.border.toList(),
+                        newHoles = land.holes.toList(),
+                    )
+                }
+
+                is LandEditorStates.EditState -> {
+                    land.border.toLatLngBounds()?.let{ bounds ->
+                        viewModelScope.launch(Dispatchers.Main){
+                            cameraPositionState.move(
+                                CameraUpdateFactory.newLatLngBounds(
+                                    bounds,
+                                    128
+                                )
+                            )
+                        }
+                    }
+                    LandEditorStates.NormalState(
+                        land = state.land,
+                        newTitle = land.title,
+                        newColor = land.color.copy(),
+                        newBorder = land.border.toList(),
+                        newHoles = land.holes.toList(),
+                    )
+                }
+
+                else ->
+                    state
+            }
+        }
+    }
 }
 

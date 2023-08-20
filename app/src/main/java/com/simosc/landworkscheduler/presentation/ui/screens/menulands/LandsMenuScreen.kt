@@ -690,7 +690,7 @@ private fun LandItem(
     if(showDivider) {
         Divider(
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = .05f),
-            thickness = 1.dp
+            thickness = 2.dp
         )
     }
 }

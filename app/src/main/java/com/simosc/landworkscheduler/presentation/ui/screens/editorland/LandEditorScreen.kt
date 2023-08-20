@@ -29,6 +29,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -79,6 +81,7 @@ fun LandEditorScreen(
     onSubmitAction: () -> Unit = {},
     onCancelAction: () -> Unit = {},
     onResetAction: () -> Unit = {},
+    onImportFromFile: () -> Unit = {},
     onSaveAction: () -> Unit = {},
     onMapClick: (LatLng) -> Unit = {},
     onAddressUpdate: (String, String) -> Unit = {_,_ -> },
@@ -117,6 +120,7 @@ fun LandEditorScreen(
                 },
                 onActionUpdate = onActionUpdate,
                 onResetAction = onResetAction,
+                onImportFromFile = onImportFromFile,
             )
         },
         snackbarHost = {
@@ -156,6 +160,7 @@ fun LandEditorScreen(
                     uiState = uiState,
                     showNeedSaveDialog = showNeedSaveDialog,
                     onAddressUpdate = onAddressUpdate,
+                    onImportFromFile = onImportFromFile,
                     onUpdateColor = onUpdateColor,
                     onUpdateTitle = onUpdateTitle,
                     onSaveAction = onSaveAction,
@@ -181,7 +186,8 @@ private fun LandEditorTopBar(
     uiState: LandEditorStates,
     onBackPress: () -> Unit,
     onActionUpdate: (LandEditorActions) -> Unit,
-    onResetAction: () -> Unit
+    onResetAction: () -> Unit,
+    onImportFromFile: () -> Unit = {}
 ) {
     var showSubMenu by remember{
         mutableStateOf(false)
@@ -337,6 +343,19 @@ private fun LandEditorTopBar(
                         onClick = {
                             showSubMenu = false
                             onResetAction()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(
+                                    id = R.string.land_editor_action_import_from_file
+                                )
+                            )
+                        },
+                        onClick = {
+                            showSubMenu = false
+                            onImportFromFile()
                         }
                     )
                 }
@@ -565,6 +584,7 @@ private fun ShowDialogs(
     uiState: LandEditorStates,
     showNeedSaveDialog: Boolean,
     onAddressUpdate: (String, String) -> Unit,
+    onImportFromFile: () -> Unit,
     onUpdateColor: (Color) -> Unit,
     onUpdateTitle: (String) -> Unit,
     onSaveAction: () -> Unit,
@@ -590,6 +610,7 @@ private fun ShowDialogs(
         is LandEditorStates.NeedLocation ->
             NewLandDialog(
                 initialLandTitle = uiState.land.title,
+                onImportFromFile = onImportFromFile,
                 onSubmit = onAddressUpdate,
                 onDismiss = onBackPress
             )
@@ -614,6 +635,7 @@ private fun ShowDialogs(
 private fun NewLandDialog(
     initialLandTitle: String = "",
     initialLandAddress: String = "",
+    onImportFromFile: () -> Unit,
     onDismiss: () -> Unit,
     onSubmit: (String, String) -> Unit
 ){
@@ -632,6 +654,17 @@ private fun NewLandDialog(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(
+                        id = R.string.land_editor_dialog_title_label
+                    ),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
                 var landTitle by remember(initialLandTitle){
                     mutableStateOf(initialLandTitle)
                 }
@@ -642,12 +675,12 @@ private fun NewLandDialog(
                     singleLine = true,
                     label = {
                         Text(
-                            text = stringResource(id = R.string.land_editor_land_title_label),
+                            text = stringResource(id = R.string.land_editor_dialog_land_title_label),
                             style = MaterialTheme.typography.labelLarge
                         )
                     }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 var landAddress by remember(initialLandAddress){
                     mutableStateOf(initialLandAddress)
@@ -659,17 +692,17 @@ private fun NewLandDialog(
                     singleLine = true,
                     label = {
                         Text(
-                            text = stringResource(id = R.string.land_editor_land_address_label),
+                            text = stringResource(id = R.string.land_editor_dialog_land_address_label),
                             style = MaterialTheme.typography.labelLarge
                         )
                     },
                     placeholder = {
                         Text(
-                            text = stringResource(id = R.string.land_editor_land_address_placeholder),
+                            text = stringResource(id = R.string.land_editor_dialog_land_address_placeholder),
                         )
                     }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
                     modifier = Modifier
@@ -684,6 +717,28 @@ private fun NewLandDialog(
                     Text(
                         text = stringResource(
                             id = R.string.submit_label
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = stringResource(
+                        id = R.string.land_editor_dialog_other_actions_label
+                    ),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onImportFromFile,
+                ) {
+                    Text(
+                        text = stringResource(
+                            id = R.string.land_editor_dialog_button_import_from_file
                         )
                     )
                 }

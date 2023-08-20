@@ -100,23 +100,33 @@ class LandsMenuViewModel @Inject constructor(
             when(currState){
                 is LandsMenuStates.Loaded -> LandsMenuStates.Loaded(
                     lands = currState.lands.filter {
-                        query.tokenizedSearchIn("#${it.id} ${it.title}")
+                        query.tokenizedSearchIn(
+                            "#${it.id} ${it.id}# ${it.title}"
+                        )
                     }
                 )
                 is LandsMenuStates.DeleteLands -> LandsMenuStates.DeleteLands(
                     lands = currState.lands.filter {
-                        query.tokenizedSearchIn("#${it.id} ${it.title}")
+                        query.tokenizedSearchIn(
+                            "#${it.id} ${it.id}# ${it.title}"
+                        )
                     },
                     selectedLands = currState.selectedLands.filter {
-                        query.tokenizedSearchIn("#${it.id} ${it.title}")
+                        query.tokenizedSearchIn(
+                            "#${it.id} ${it.id}# ${it.title}"
+                        )
                     }
                 )
                 is LandsMenuStates.ExportLands -> LandsMenuStates.ExportLands(
                     lands = currState.lands.filter {
-                        query.tokenizedSearchIn("#${it.id} ${it.title}")
+                        query.tokenizedSearchIn(
+                            "#${it.id} ${it.id}# ${it.title}"
+                        )
                     },
                     selectedLands = currState.selectedLands.filter {
-                        query.tokenizedSearchIn("#${it.id} ${it.title}")
+                        query.tokenizedSearchIn(
+                            "#${it.id} ${it.id}# ${it.title}"
+                        )
                     }
                 )
                 else ->

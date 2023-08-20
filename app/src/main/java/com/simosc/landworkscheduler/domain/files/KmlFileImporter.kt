@@ -8,4 +8,7 @@ interface KmlFileImporter {
         inputStream: InputStream
     ): List<Land>
 
+    companion object{
+        const val MimeType: String = "application/vnd.google-earth.kml+xml"
+    }
 }

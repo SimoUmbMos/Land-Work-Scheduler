@@ -7,6 +7,8 @@ const val DefaultMapZoom = 13f
 
 const val DefaultMapItemStrokeAlpha = 1f
 const val DefaultMapItemFillAlpha = .5f
+const val DefaultMapDisableItemStrokeAlpha = .5f
+const val DefaultMapDisableItemFillAlpha = .25f
 const val DefaultSelectedPointFillAlpha = .6f
 const val DefaultUnselectedPointFillAlpha = .2f
 
