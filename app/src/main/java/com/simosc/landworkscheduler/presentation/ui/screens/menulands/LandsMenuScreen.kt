@@ -96,26 +96,32 @@ fun LandsMenuScreen(
     val ctx = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    BackHandler(isLoadingAction){
-        scope.launch {
-            snackbarHostState.showSnackbar(
-                ctx.getString(R.string.land_menu_error_wait_action_to_finish)
-            )
-        }
-    }
-    BackHandler(isSearchAppBarOpen){
-        if(!isLoadingAction) {
-            isSearchAppBarOpen = false
-        }
-    }
-    BackHandler(searchQuery.isNotBlank()){
-        if(!isLoadingAction) {
-            onSearchChange("")
-        }
-    }
-    BackHandler(uiState is LandsMenuStates.MultiSelectLands){
-        if(!isLoadingAction) {
-            onActionChange(LandsMenuActions.None)
+    BackHandler(
+        isLoadingAction ||
+                isSearchAppBarOpen ||
+                searchQuery.isNotBlank() ||
+                uiState is LandsMenuStates.MultiSelectLands
+    ){
+        when{
+            isLoadingAction -> {
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        ctx.getString(R.string.land_menu_error_wait_action_to_finish)
+                    )
+                }
+            }
+
+            isSearchAppBarOpen -> {
+                isSearchAppBarOpen = false
+            }
+
+            searchQuery.isNotBlank() -> {
+                onSearchChange("")
+            }
+
+            uiState is LandsMenuStates.MultiSelectLands -> {
+                onActionChange(LandsMenuActions.None)
+            }
         }
     }
 
