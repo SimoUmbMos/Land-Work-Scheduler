@@ -29,14 +29,29 @@ class LandPreviewViewModel @Inject constructor(
         stopSync()
     }
 
+    private val _landId: MutableStateFlow<Long> = MutableStateFlow(-1L)
+
     private val _uiState: MutableStateFlow<LandPreviewStates> =
         MutableStateFlow(LandPreviewStates.LoadingState)
     val uiState: StateFlow<LandPreviewStates> =
         _uiState.asStateFlow()
 
-    fun loadData(lid: Long){
-        stopSync()
-        mainJob = getLandUseCase(lid)
+    init {
+        _landId.onEach {  landId ->
+            stopSync()
+            if(landId > -1L)
+                startSync(landId)
+            else
+                _uiState.update {
+                    LandPreviewStates.LoadingState
+                }
+        }.launchIn(
+            viewModelScope,
+        )
+    }
+
+    private fun startSync(landId: Long){
+        mainJob = getLandUseCase(landId)
             .onEach {  land ->
                 _uiState.update {
                     land?.let{
@@ -53,6 +68,10 @@ class LandPreviewViewModel @Inject constructor(
             it.cancel()
             mainJob = null
         }
+    }
+
+    fun setLandId(landId: Long){
+        _landId.update { if(landId < 0L) 0L else landId }
     }
 
     fun deleteLand() {

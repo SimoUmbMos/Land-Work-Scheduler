@@ -1,6 +1,9 @@
 package com.simosc.landworkscheduler.presentation.ui.screens.menulands
 
+import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -30,7 +33,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.OutputStream
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -48,11 +53,13 @@ class LandsMenuViewModel @Inject constructor(
     private val _selectedLands = MutableStateFlow<List<Land>>(emptyList())
     private val _selectedAction = MutableStateFlow(None)
 
+    private val _isLoadingData = MutableStateFlow(false)
     private val _isLoadingAction = MutableStateFlow(false)
     private val _isSearching = MutableStateFlow(false)
 
 
     val searchQuery = _searchQuery.asStateFlow()
+    val isLoadingData = _isLoadingData.asStateFlow()
     val isLoadingAction = _isLoadingAction.asStateFlow()
     val isSearching = _isSearching.asStateFlow()
     val errorMessage = _error.asSharedFlow()
@@ -61,7 +68,7 @@ class LandsMenuViewModel @Inject constructor(
         combine(_lands,_selectedAction, _selectedLands){ lands, selectedAction, selectedLands ->
             if(lands != null) {
                 when (selectedAction) {
-                    None -> LandsMenuStates.Loaded(
+                    None -> LandsMenuStates.NormalState(
                         lands = lands
                     )
 
@@ -98,7 +105,7 @@ class LandsMenuViewModel @Inject constructor(
         }
         .combine(_currState){ query, currState ->
             when(currState){
-                is LandsMenuStates.Loaded -> LandsMenuStates.Loaded(
+                is LandsMenuStates.NormalState -> LandsMenuStates.NormalState(
                     lands = currState.lands.filter {
                         query.tokenizedSearchIn(
                             "#${it.id} ${it.id}# ${it.title}"
@@ -142,6 +149,11 @@ class LandsMenuViewModel @Inject constructor(
             LandsMenuStates.Loading
         )
 
+
+    init{
+        startSync()
+    }
+
     override fun onCleared() {
         super.onCleared()
         stopSync()
@@ -154,11 +166,21 @@ class LandsMenuViewModel @Inject constructor(
         }
     }
 
-    fun loadLands() {
+    private fun startSync() {
+        _isLoadingData.update { true }
+        mainJob = getLandsUseCase()
+            .onEach { lands ->
+                _lands.update { lands }
+                _isLoadingData.update { false }
+            }
+            .launchIn(
+                CoroutineScope(Dispatchers.IO)
+            )
+    }
+
+    fun refreshLands(){
         stopSync()
-        mainJob = getLandsUseCase().onEach { lands ->
-            _lands.update { lands }
-        }.launchIn(CoroutineScope(Dispatchers.IO))
+        startSync()
     }
 
     fun toggleLand(land: Land) {
@@ -170,44 +192,6 @@ class LandsMenuViewModel @Inject constructor(
                     add(land)
             }.toList()
         }
-    }
-
-    fun createFileToExport(
-        createFileLauncher: ManagedActivityResultLauncher<String, Uri?>,
-        fileName: String
-    ) {
-        uiState.value.let { state ->
-            if(state is LandsMenuStates.ExportLands) {
-                if(state.selectedLands.isNotEmpty()) {
-                    createFileLauncher.launch(fileName)
-                }else{
-                    changeAction(None)
-                }
-            }
-        }
-    }
-
-    suspend fun generateKml(outputStream: OutputStream): Boolean{
-        var result = false
-        uiState.value.let{ state ->
-            if(state is LandsMenuStates.ExportLands){
-                state.selectedLands.let { selectedLands ->
-                    _isLoadingAction.update { true }
-                    try{
-                        if(generateKmlUseCase(selectedLands, outputStream)){
-                            result = true
-                        }else{
-                            _error.tryEmit(R.string.land_menu_error_cant_save_file)
-                        }
-                    }catch (e: Exception){
-                        _error.tryEmit(R.string.land_menu_error_cant_save_file)
-                    }
-                    _isLoadingAction.update { false }
-                }
-            }
-        }
-        changeAction(None)
-        return result
     }
 
     fun executeLandsDelete() {
@@ -244,6 +228,109 @@ class LandsMenuViewModel @Inject constructor(
             else
                 _searchQuery.update { "" }
         }
+    }
+
+
+    fun onExportSelectedLands(
+        context: Context,
+        createFileLauncher: ManagedActivityResultLauncher<String, Uri?>,
+    ) {
+        uiState.value.let { state ->
+            if (state is LandsMenuStates.ExportLands && state.selectedLands.isNotEmpty()) {
+                createFileLauncher.launch(
+                    LocalDateTime.now().run {
+                        context.getString( R.string.land_menu_export_file_name,
+                            year, monthValue, dayOfMonth, hour, minute, second, nano
+                        )
+                    }
+                )
+            } else {
+                changeAction(None)
+            }
+        }
+    }
+
+    fun onCreateFileLauncherResult(
+        uri: Uri?,
+        context: Context
+    ) = viewModelScope.launch(Dispatchers.IO){
+        uri?.let{
+
+            var fileGenerated = false
+
+            context.contentResolver.openOutputStream(uri,"w")?.use{ outputStream ->
+                fileGenerated = generateKml(outputStream)
+            }
+
+            if(fileGenerated) {
+                context.contentResolver.query(
+                    uri,
+                    null,
+                    null,
+                    null,
+                    null
+                )?.use{ cursor ->
+                    val nameIndex = cursor.getColumnIndex(
+                        OpenableColumns.DISPLAY_NAME
+                    )
+                    cursor.moveToFirst()
+                    val fileName = cursor.getString(nameIndex)
+
+                    launch(Dispatchers.Main){
+                        Toast.makeText(
+                            context,
+                            context.getString(
+                                R.string.land_menu_message_file_saved,
+                                fileName
+                            ),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                }
+
+            }else{
+
+                uri.path?.let {
+                    File(it).let{ file ->
+                        file.delete()
+                        if(file.exists()){
+                            file.canonicalFile.delete()
+                            if(file.exists()){
+                                context.deleteFile(file.name)
+                            }
+                        }
+                    }
+                }
+
+            }
+
+        }?:run{
+            changeAction(None)
+        }
+    }
+
+    private suspend fun generateKml(outputStream: OutputStream): Boolean{
+        var result = false
+        uiState.value.let{ state ->
+            if(state is LandsMenuStates.ExportLands){
+                state.selectedLands.let { selectedLands ->
+                    _isLoadingAction.update { true }
+                    try{
+                        if(generateKmlUseCase(selectedLands, outputStream)){
+                            result = true
+                        }else{
+                            _error.tryEmit(R.string.land_menu_error_cant_save_file)
+                        }
+                    }catch (e: Exception){
+                        _error.tryEmit(R.string.land_menu_error_cant_save_file)
+                    }
+                    _isLoadingAction.update { false }
+                }
+            }
+        }
+        changeAction(None)
+        return result
     }
 
 }

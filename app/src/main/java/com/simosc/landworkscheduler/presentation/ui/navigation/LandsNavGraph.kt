@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.core.net.toFile
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -17,8 +16,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.navArgument
-import com.simosc.landworkscheduler.R
-import com.simosc.landworkscheduler.core.config.DefaultAnimationDelayDurationMillis
 import com.simosc.landworkscheduler.domain.extension.getLand
 import com.simosc.landworkscheduler.domain.files.KmlFileExporter
 import com.simosc.landworkscheduler.presentation.activities.KmlReaderActivity
@@ -28,18 +25,13 @@ import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandN
 import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandNoteEditorViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuViewModel
-import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuActions
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuStates
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewStates
 import com.simosc.landworkscheduler.presentation.ui.screens.previewland.LandPreviewViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 
 
 fun NavGraphBuilder.landsNavGraph(navController: NavController) {
@@ -56,30 +48,21 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             val viewModel = hiltViewModel<LandsMenuViewModel>()
             val uiState by viewModel.uiState.collectAsState()
             val searchQuery by viewModel.searchQuery.collectAsState()
-            val errorMessage by viewModel.errorMessage.collectAsState(initial = null)
+            val isLoadingData by viewModel.isLoadingData.collectAsState()
             val isLoadingAction by viewModel.isLoadingAction.collectAsState()
             val isSearching by viewModel.isSearching.collectAsState()
+            val errorMessage by viewModel.errorMessage.collectAsState(initial = null)
 
             val createFileLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.CreateDocument(KmlFileExporter.MimeType)
-            ){ newFileUri ->
-                newFileUri?.let{
-                    CoroutineScope(Dispatchers.IO).launch {
-                        var fileGenerated = false
-                        ctx.contentResolver.openOutputStream(it)?.use { outputStream ->
-                            fileGenerated = viewModel.generateKml(outputStream)
-                        }
-                        if(!fileGenerated) {
-                            it.toFile().delete()
-                        }
-                    }
-                }?: viewModel.changeAction(LandsMenuActions.None)
-            }
+                contract = ActivityResultContracts.CreateDocument(KmlFileExporter.MimeType),
+                onResult = { viewModel.onCreateFileLauncherResult(uri = it,context = ctx) }
+            )
 
             LandsMenuScreen(
                 uiState = uiState,
                 errorMessage = errorMessage?.let { stringResource(id = it) },
                 searchQuery = searchQuery,
+                isLoadingData = isLoadingData,
                 isSearching = isSearching,
                 isLoadingAction = isLoadingAction,
                 onBackPress = {
@@ -105,21 +88,12 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                     viewModel.executeLandsDelete()
                 },
                 onExportSelectedLands = {
-                    LocalDateTime.now().run{
-                        viewModel.createFileToExport(
-                            createFileLauncher,
-                            ctx.getString(
-                                R.string.land_menu_export_file_name,
-                                year,monthValue,dayOfMonth,hour,minute,second,nano
-                            )
-                        )
-                    }
+                    viewModel.onExportSelectedLands(ctx, createFileLauncher)
+                },
+                onRefreshData = {
+                    viewModel.refreshLands()
                 }
             )
-            LaunchedEffect(Unit){
-                delay(DefaultAnimationDelayDurationMillis)
-                viewModel.loadLands()
-            }
         }
 
         composable(
@@ -166,7 +140,7 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 },
             )
             LaunchedEffect(Unit){
-                viewModel.loadData(it.arguments!!.getLong("lid"))
+                viewModel.setLandId(it.arguments!!.getLong("lid"))
             }
         }
 
@@ -179,11 +153,13 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 }
             )
         ){
-            val coroutineScope = rememberCoroutineScope()
             val viewModel = hiltViewModel<LandEditorViewModel>()
             val uiState by viewModel.uiState.collectAsState()
             val error by viewModel.error.collectAsState(initial = null)
+
+            val coroutineScope = rememberCoroutineScope()
             val ctx = LocalContext.current
+
             val startImportActivity = rememberLauncherForActivityResult(
                 ActivityResultContracts.StartActivityForResult()
             ){
@@ -191,6 +167,7 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                     viewModel.onImportLand(land)
                 }
             }
+
             LandEditorScreen(
                 uiState = uiState,
                 cameraPositionState = viewModel.cameraPositionState,
@@ -221,6 +198,7 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                     }
                 }
             )
+            
             LaunchedEffect(Unit){
                 viewModel.setSelectedId(it.arguments?.getLong("lid") ?: 0L)
             }

@@ -317,71 +317,47 @@ class LandEditorViewModel @Inject constructor(
     }
 
     fun onImportLand(land: Land) {
-        _uiState.update { state ->
-            when(state){
-                is LandEditorStates.NeedLocation -> {
-                    land.border.toLatLngBounds()?.let{ bounds ->
-                        viewModelScope.launch(Dispatchers.Main){
-                            cameraPositionState.move(
-                                CameraUpdateFactory.newLatLngBounds(
-                                    bounds,
-                                    128
-                                )
-                            )
-                        }
-                        LandEditorStates.NormalState(
-                            land = state.land,
-                            newTitle = land.title,
-                            newColor = land.color.copy(),
-                            newBorder = land.border.toList(),
-                            newHoles = land.holes.toList(),
-                        )
-                    }?: state
-                }
-
-                is LandEditorStates.NormalState -> {
-                    land.border.toLatLngBounds()?.let{ bounds ->
-                        viewModelScope.launch(Dispatchers.Main){
-                            cameraPositionState.move(
-                                CameraUpdateFactory.newLatLngBounds(
-                                    bounds,
-                                    128
-                                )
-                            )
-                        }
-                    }
-                    LandEditorStates.NormalState(
-                        land = state.land,
-                        newTitle = land.title,
-                        newColor = land.color.copy(),
-                        newBorder = land.border.toList(),
-                        newHoles = land.holes.toList(),
+        land.border.toLatLngBounds()?.let{ bounds ->
+            viewModelScope.launch(Dispatchers.Main){
+                cameraPositionState.move(
+                    CameraUpdateFactory.newLatLngBounds(
+                        bounds,
+                        128
                     )
-                }
+                )
+            }
+        }
+
+        val originalLand = _uiState.value.let { state ->
+            when(state){
+                is LandEditorStates.NeedLocation ->
+                    state.land
+
+                is LandEditorStates.NormalState ->
+                    state.land
 
                 is LandEditorStates.EditState -> {
-                    land.border.toLatLngBounds()?.let{ bounds ->
-                        viewModelScope.launch(Dispatchers.Main){
-                            cameraPositionState.move(
-                                CameraUpdateFactory.newLatLngBounds(
-                                    bounds,
-                                    128
-                                )
-                            )
-                        }
-                    }
-                    LandEditorStates.NormalState(
-                        land = state.land,
-                        newTitle = land.title,
-                        newColor = land.color.copy(),
-                        newBorder = land.border.toList(),
-                        newHoles = land.holes.toList(),
-                    )
+                    state.land
                 }
 
                 else ->
-                    state
+                    Land.emptyLand().copy(
+                        id = if(_selectedId.value > 0L)
+                            _selectedId.value
+                        else
+                            0L
+                    )
             }
+        }
+
+        _uiState.update {
+            LandEditorStates.NormalState(
+                land = originalLand,
+                newTitle = land.title,
+                newColor = land.color,
+                newBorder = land.border,
+                newHoles = land.holes
+            )
         }
     }
 }

@@ -120,6 +120,10 @@ class LiveTrackingViewModel @Inject constructor(
         stopLocationUpdates()
     }
 
+    init {
+        startDataUpdates()
+    }
+
     fun onPermissionsResult(
         result: Map<String, @JvmSuppressWildcards Boolean>
     ) {
@@ -136,7 +140,7 @@ class LiveTrackingViewModel @Inject constructor(
         }
     }
 
-    fun startDataUpdates(){
+    private fun startDataUpdates(){
         stopDataUpdates()
 
         landsJob = getLandsUseCase()
@@ -160,6 +164,21 @@ class LiveTrackingViewModel @Inject constructor(
             .launchIn(
                 scope = CoroutineScope(Dispatchers.IO)
             )
+    }
+
+    private fun stopDataUpdates(){
+        landsJob?.let{
+            it.cancel()
+            landsJob = null
+        }
+        zonesJob?.let{
+            it.cancel()
+            zonesJob = null
+        }
+        notesJob?.let{
+            it.cancel()
+            notesJob = null
+        }
     }
 
     fun startLocationUpdates() {
@@ -216,21 +235,6 @@ class LiveTrackingViewModel @Inject constructor(
             }.launchIn(
                 scope = viewModelScope
             )
-        }
-    }
-
-    private fun stopDataUpdates(){
-        landsJob?.let{
-            it.cancel()
-            landsJob = null
-        }
-        zonesJob?.let{
-            it.cancel()
-            zonesJob = null
-        }
-        notesJob?.let{
-            it.cancel()
-            notesJob = null
         }
     }
 

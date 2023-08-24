@@ -4,14 +4,23 @@ import com.simosc.landworkscheduler.domain.model.Land
 
 sealed class LandsMenuStates {
     data object Loading: LandsMenuStates()
-    class Loaded(
+
+    sealed class Loaded(
         val lands: List<Land>
-    ): LandsMenuStates()
+    ):LandsMenuStates()
+
+    class NormalState(
+        lands: List<Land>
+    ): Loaded(
+        lands = lands
+    )
 
     sealed class MultiSelectLands(
-        val lands: List<Land>,
+        lands: List<Land>,
         val selectedLands: List<Land>
-    ): LandsMenuStates(){
+    ): Loaded(
+        lands
+    ){
         abstract fun onToggleLand(land: Land): MultiSelectLands
     }
 

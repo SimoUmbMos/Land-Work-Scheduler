@@ -77,6 +77,8 @@
     <string name="land_menu_list_item_land_id">#%1$d</string>
     <string name="land_menu_list_item_land_title">%1$s</string>
     <string name="land_menu_list_item_land_border_empty">Land border is empty</string>
+    <!-- message strings -->
+    <string name="land_menu_message_file_saved">File saved: %1$s</string>
     <!-- errors strings -->
     <string name="land_menu_error_cant_save_file">File did not save, try again</string>
     <string name="land_menu_error_wait_action_to_finish">Please wait the action to finish</string>

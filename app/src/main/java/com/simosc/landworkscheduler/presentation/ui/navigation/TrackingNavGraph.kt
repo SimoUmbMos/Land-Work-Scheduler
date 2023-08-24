@@ -20,10 +20,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.simosc.landworkscheduler.core.config.DefaultAnimationDelayDurationMillis
 import com.simosc.landworkscheduler.presentation.ui.screens.previewuserlocation.LiveTrackingScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.previewuserlocation.LiveTrackingViewModel
-import kotlinx.coroutines.delay
 
 fun NavGraphBuilder.trackingNavGraph(navController: NavController) {
     navigation(
@@ -73,11 +71,6 @@ fun NavGraphBuilder.trackingNavGraph(navController: NavController) {
                     viewModel.startLocationUpdates()
                 }
             )
-
-            LaunchedEffect(Unit){
-                delay(DefaultAnimationDelayDurationMillis)
-                viewModel.startDataUpdates()
-            }
             LaunchedEffect(context){
                 val permissionFineLocation = ContextCompat.checkSelfPermission(
                     context,
