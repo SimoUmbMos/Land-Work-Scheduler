@@ -16,7 +16,6 @@ android {
     defaultConfig {
         applicationId = "com.simosc.landworkscheduler"
         minSdk = 26
-        //noinspection EditedTargetSdkVersion
         targetSdk = 34
         versionCode = 2
         versionName = "0.2.0"
@@ -91,12 +90,12 @@ dependencies {
     implementation("androidx.compose.material:material:1.5.0")
     implementation("androidx.compose.material3:material3:1.1.1")
 
-    implementation("androidx.navigation:navigation-compose:2.7.0")
+    implementation("androidx.navigation:navigation-compose:2.7.1")
 
-    implementation("com.google.maps.android:maps-compose:2.13.0")
+    implementation("com.google.maps.android:maps-compose:2.14.0")
     implementation("com.google.android.gms:play-services-maps:18.1.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
-    implementation("com.google.maps.android:android-maps-utils:3.5.2")
+    implementation("com.google.maps.android:android-maps-utils:3.5.3")
 
     implementation("androidx.room:room-runtime:2.5.2")
     implementation("androidx.room:room-ktx:2.5.2")
