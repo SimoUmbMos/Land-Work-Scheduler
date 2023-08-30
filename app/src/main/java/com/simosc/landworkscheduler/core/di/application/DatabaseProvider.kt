@@ -1,4 +1,4 @@
-package com.simosc.landworkscheduler.core.di
+package com.simosc.landworkscheduler.core.di.application
 
 import android.content.Context
 import androidx.room.Room
@@ -14,12 +14,11 @@ import dagger.hilt.components.SingletonComponent
 object DatabaseProvider {
 
     @Provides
-    fun provideLocalDatabase(
-        @ApplicationContext applicationContext: Context
-    ): LocalDatabase = Room.databaseBuilder(
-        applicationContext,
-        LocalDatabase::class.java,
-        LocalDatabase.database_name
-    ).build()
+    fun provideLocalDatabase(@ApplicationContext applicationContext: Context): LocalDatabase =
+        Room.databaseBuilder(
+            applicationContext,
+            LocalDatabase::class.java,
+            LocalDatabase.database_name
+        ).build()
 
 }

@@ -22,12 +22,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.systemuicontroller.SystemUiController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.google.android.gms.maps.MapsInitializer
@@ -65,7 +65,7 @@ class KmlReaderActivity : ComponentActivity() {
                 val context: Context = LocalContext.current
                 val background: Color = MaterialTheme.colorScheme.background
                 val onBackground: Color = MaterialTheme.colorScheme.onBackground
-                val uiState: KmlLandReaderStates by viewModel.uiState.collectAsState()
+                val uiState: KmlLandReaderStates by viewModel.uiState.collectAsStateWithLifecycle()
 
                 LaunchedEffect(Unit){
                     MapsInitializer.initialize(context)

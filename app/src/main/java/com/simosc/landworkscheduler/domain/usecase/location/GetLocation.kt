@@ -3,9 +3,11 @@ package com.simosc.landworkscheduler.domain.usecase.location
 import android.location.Location
 import com.google.android.gms.location.Priority
 import com.simosc.landworkscheduler.domain.client.LocationClient
+import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+@ViewModelScoped
 class GetLocation @Inject constructor(
     private val locationClient: LocationClient,
 ) {

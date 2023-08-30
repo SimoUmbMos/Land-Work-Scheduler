@@ -19,7 +19,7 @@ import com.simosc.landworkscheduler.domain.extension.trimWithSingleWhitespaces
 import com.simosc.landworkscheduler.domain.model.Land
 import com.simosc.landworkscheduler.domain.usecase.land.GetLand
 import com.simosc.landworkscheduler.domain.usecase.land.InsertLand
-import com.simosc.landworkscheduler.domain.usecase.location.getGeoLocationAddress
+import com.simosc.landworkscheduler.domain.usecase.location.GetGeoLocationAddress
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -41,7 +41,7 @@ import javax.inject.Inject
 class LandEditorViewModel @Inject constructor(
     private val getLand: GetLand,
     private val insertLand: InsertLand,
-    private val getGeoLocationAddress: getGeoLocationAddress
+    private val getGeoLocationAddress: GetGeoLocationAddress
 ):ViewModel() {
     private var syncJob: Job? = null
 

@@ -1,4 +1,4 @@
-package com.simosc.landworkscheduler.core.di
+package com.simosc.landworkscheduler.core.di.viewmodel
 
 import android.content.Context
 import com.google.android.gms.location.LocationServices
@@ -11,40 +11,27 @@ import com.simosc.landworkscheduler.domain.client.LocationClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 
 @Module
-@InstallIn(SingletonComponent::class)
-object ClientsProvider {
+@InstallIn(ViewModelComponent::class)
+object SensorClientsProvider {
 
     @Provides
-    fun provideGeoClient(
-        @ApplicationContext applicationContext: Context
-    ): GeoClient {
-        return GeoClientImpl(
-            applicationContext
-        )
-    }
+    fun provideGeoClient(@ApplicationContext applicationContext: Context): GeoClient =
+        GeoClientImpl(applicationContext)
 
     @Provides
-    fun provideCompassClient(
-        @ApplicationContext applicationContext: Context
-    ): CompassClient {
-        return CompassClientImpl(
-            applicationContext
-        )
-    }
+    fun provideCompassClient(@ApplicationContext applicationContext: Context): CompassClient =
+        CompassClientImpl(applicationContext)
 
     @Provides
-    fun provideLocationClient(
-        @ApplicationContext applicationContext: Context
-    ): LocationClient {
-        return LocationClientImpl(
+    fun provideLocationClient(@ApplicationContext applicationContext: Context): LocationClient =
+        LocationClientImpl(
             context = applicationContext,
             client = LocationServices.getFusedLocationProviderClient(
                 applicationContext
             )
         )
-    }
 }

@@ -8,7 +8,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -16,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -33,9 +33,9 @@ fun NavGraphBuilder.trackingNavGraph(navController: NavController) {
             route = "live_tracking"
         ) {
             val viewModel = hiltViewModel<LiveTrackingViewModel>()
-            val uiState by viewModel.uiState.collectAsState()
-            val userLocation by viewModel.userLocation.collectAsState()
-            val userAzimuth by viewModel.userAzimuth.collectAsState()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val userLocation by viewModel.userLocation.collectAsStateWithLifecycle()
+            val userAzimuth by viewModel.userAzimuth.collectAsStateWithLifecycle()
 
             val context = LocalContext.current
             val lifecycleOwner = LocalLifecycleOwner.current

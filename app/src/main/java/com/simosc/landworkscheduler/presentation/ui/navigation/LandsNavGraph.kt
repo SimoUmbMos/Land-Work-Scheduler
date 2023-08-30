@@ -4,12 +4,12 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -42,12 +42,14 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             val ctx = LocalContext.current
 
             val viewModel = hiltViewModel<LandsMenuViewModel>()
-            val uiState by viewModel.uiState.collectAsState()
-            val searchQuery by viewModel.searchQuery.collectAsState()
-            val isLoadingData by viewModel.isLoadingData.collectAsState()
-            val isLoadingAction by viewModel.isLoadingAction.collectAsState()
-            val isSearching by viewModel.isSearching.collectAsState()
-            val errorMessage by viewModel.errorMessage.collectAsState(initial = null)
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+            val isLoadingData by viewModel.isLoadingData.collectAsStateWithLifecycle()
+            val isLoadingAction by viewModel.isLoadingAction.collectAsStateWithLifecycle()
+            val isSearching by viewModel.isSearching.collectAsStateWithLifecycle()
+            val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle(
+                initialValue = null
+            )
 
             val createFileLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.CreateDocument(KmlFileExporter.MimeType),
@@ -105,7 +107,7 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             )
         ){
             val viewModel = hiltViewModel<LandPreviewViewModel>()
-            val uiState by viewModel.uiState.collectAsState()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             LandPreviewScreen(
                 uiState = uiState,
                 onBackPress = {
@@ -154,8 +156,10 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
             )
         ){
             val viewModel = hiltViewModel<LandEditorViewModel>()
-            val uiState by viewModel.uiState.collectAsState()
-            val error by viewModel.error.collectAsState(initial = null)
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val error by viewModel.error.collectAsStateWithLifecycle(
+                initialValue = null
+            )
 
             val coroutineScope = rememberCoroutineScope()
             val ctx = LocalContext.current

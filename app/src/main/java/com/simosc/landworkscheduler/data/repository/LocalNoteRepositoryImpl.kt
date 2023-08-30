@@ -1,6 +1,6 @@
 package com.simosc.landworkscheduler.data.repository
 
-import com.simosc.landworkscheduler.data.datasource.local.dao.LocalNoteDao
+import com.simosc.landworkscheduler.data.datasource.local.database.LocalDatabase
 import com.simosc.landworkscheduler.data.datasource.local.extensions.toEntity
 import com.simosc.landworkscheduler.data.datasource.local.extensions.toModel
 import com.simosc.landworkscheduler.domain.model.Note
@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class LocalNoteRepositoryImpl (
-    private val noteDao: LocalNoteDao
+    private val db: LocalDatabase
 ): LocalNoteRepository {
 
     override fun getNotes(): Flow<List<Note>> {
-        return noteDao.getAllNotes().map { entities ->
+        return db.localNoteDao().getAllNotes().map { entities ->
             List(entities.size){ index ->
                 entities[index].toModel()
             }
@@ -21,7 +21,7 @@ class LocalNoteRepositoryImpl (
     }
 
     override fun getLandNotes(lid: Long): Flow<List<Note>> {
-        return noteDao.getAllLandNotes(lid).map { entities ->
+        return db.localNoteDao().getAllLandNotes(lid).map { entities ->
             List(entities.size){ index ->
                 entities[index].toModel()
             }
@@ -29,19 +29,19 @@ class LocalNoteRepositoryImpl (
     }
 
     override fun getNote(id: Long): Flow<Note> {
-        return noteDao.getNote(id).map{ it.toModel() }
+        return db.localNoteDao().getNote(id).map{ it.toModel() }
     }
 
     override fun insertNote(note: Note): Note {
         note.toEntity().let{ entity ->
-            noteDao.insertNote(entity).let{ id ->
+            db.localNoteDao().insertNote(entity).let{ id ->
                 return note.copy(id = id)
             }
         }
     }
 
     override fun removeNote(note: Note) {
-        noteDao.deleteNote(note.toEntity())
+        db.localNoteDao().deleteNote(note.toEntity())
     }
 
 }

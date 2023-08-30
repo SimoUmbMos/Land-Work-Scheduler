@@ -1,6 +1,6 @@
 package com.simosc.landworkscheduler.data.repository
 
-import com.simosc.landworkscheduler.data.datasource.local.dao.LocalWorkDao
+import com.simosc.landworkscheduler.data.datasource.local.database.LocalDatabase
 import com.simosc.landworkscheduler.data.datasource.local.extensions.toEntity
 import com.simosc.landworkscheduler.data.datasource.local.extensions.toModel
 import com.simosc.landworkscheduler.domain.model.Work
@@ -10,11 +10,11 @@ import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 
 class LocalWorkRepositoryImpl (
-    private val workDao: LocalWorkDao
+    private val db: LocalDatabase
 ): LocalWorkRepository {
 
     override fun getWorks(): Flow<List<Work>> {
-        return workDao.getWorks().map { entities ->
+        return db.localWorkDao().getWorks().map { entities ->
             List(entities.size){
                 entities[it].toModel()
             }
@@ -22,7 +22,7 @@ class LocalWorkRepositoryImpl (
     }
 
     override fun getLandWorks(lid: Long): Flow<List<Work>> {
-        return workDao.getLandWorks(lid).map { entities ->
+        return db.localWorkDao().getLandWorks(lid).map { entities ->
             List(entities.size){
                 entities[it].toModel()
             }
@@ -30,7 +30,7 @@ class LocalWorkRepositoryImpl (
     }
 
     override fun getZoneWorks(zid: Long?): Flow<List<Work>> {
-        return workDao.getZoneWorks(zid).map { entities ->
+        return db.localWorkDao().getZoneWorks(zid).map { entities ->
             List(entities.size){
                 entities[it].toModel()
             }
@@ -38,7 +38,7 @@ class LocalWorkRepositoryImpl (
     }
 
     override fun getDateWorks(date: LocalDate): Flow<List<Work>> {
-        return workDao.getDateWorks(date.toString()).map { entities ->
+        return db.localWorkDao().getDateWorks(date.toString()).map { entities ->
             List(entities.size){
                 entities[it].toModel()
             }
@@ -46,25 +46,25 @@ class LocalWorkRepositoryImpl (
     }
 
     override fun getDateWorksCount(date: LocalDate): Flow<Long> {
-        return workDao.getDateWorksCount(date.toString())
+        return db.localWorkDao().getDateWorksCount(date.toString())
     }
 
     override fun getWork(id: Long): Flow<Work?> {
-        return workDao.getWork(id).map {
+        return db.localWorkDao().getWork(id).map {
             it?.toModel()
         }
     }
 
     override fun insertWork(work: Work): Work {
         work.toEntity().let{ entity ->
-            workDao.insertWork(entity).let{ id ->
+            db.localWorkDao().insertWork(entity).let{ id ->
                 return work.copy(id = id)
             }
         }
     }
 
     override fun removeWork(work: Work) {
-        workDao.deleteWork(work.toEntity())
+        db.localWorkDao().deleteWork(work.toEntity())
     }
 
 }

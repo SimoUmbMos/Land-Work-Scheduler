@@ -1,9 +1,11 @@
 package com.simosc.landworkscheduler.domain.usecase.location
 
 import com.simosc.landworkscheduler.domain.client.CompassClient
+import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+@ViewModelScoped
 class GetAzimuth @Inject constructor(
     private val compassClient: CompassClient
 ) {
