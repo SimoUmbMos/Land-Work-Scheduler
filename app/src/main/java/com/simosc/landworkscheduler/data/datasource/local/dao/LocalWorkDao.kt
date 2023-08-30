@@ -17,7 +17,7 @@ interface LocalWorkDao {
     fun getLandWorks(lid: Long): Flow<List<LocalWorkEntity>>
 
     @Query("SELECT * FROM works WHERE zid = :zid")
-    fun getZoneWorks(zid: Long?): Flow<List<LocalWorkEntity>>
+    fun getZoneWorks(zid: Long): Flow<List<LocalWorkEntity>>
 
     @Query("SELECT * FROM works WHERE date LIKE '%' || :date || '%'")
     fun getDateWorks(date: String): Flow<List<LocalWorkEntity>>

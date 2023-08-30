@@ -9,7 +9,7 @@ interface LocalWorkRepository {
 
     fun getLandWorks(lid: Long): Flow<List<Work>>
 
-    fun getZoneWorks(zid: Long?): Flow<List<Work>>
+    fun getZoneWorks(zid: Long): Flow<List<Work>>
 
     fun getDateWorks(date: LocalDate): Flow<List<Work>>
 

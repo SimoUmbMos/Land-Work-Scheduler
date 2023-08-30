@@ -8,8 +8,8 @@ import java.time.LocalDateTime
 fun LocalWorkEntity.toModel(): Work {
     return Work(
         id = id,
-        lid = lid,
-        zid = zid,
+        lid = if(lid > 0) lid else null,
+        zid = if(zid > 0) zid else null,
         title = title,
         desc = desc,
         date = LocalDateTime.parse(date),
@@ -21,8 +21,8 @@ fun LocalWorkEntity.toModel(): Work {
 fun Work.toEntity(): LocalWorkEntity {
     return LocalWorkEntity(
         id = id,
-        lid = lid,
-        zid = zid,
+        lid = lid ?: 0,
+        zid = zid ?: 0,
         title = title,
         desc = desc,
         date = date.toString(),

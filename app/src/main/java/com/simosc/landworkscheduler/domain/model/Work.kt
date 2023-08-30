@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 data class Work(
     val id: Long,
-    val lid: Long,
+    val lid: Long?,
     val zid: Long?,
     val title: String,
     val desc: String,
@@ -14,7 +14,7 @@ data class Work(
 ) {
     companion object {
         fun emptyWork(
-            lid: Long,
+            lid: Long?,
             zid: Long?
         ) = Work(
             id = 0L,

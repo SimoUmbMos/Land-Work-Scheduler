@@ -29,7 +29,7 @@ class LocalWorkRepositoryImpl (
         }
     }
 
-    override fun getZoneWorks(zid: Long?): Flow<List<Work>> {
+    override fun getZoneWorks(zid: Long): Flow<List<Work>> {
         return db.localWorkDao().getZoneWorks(zid).map { entities ->
             List(entities.size){
                 entities[it].toModel()

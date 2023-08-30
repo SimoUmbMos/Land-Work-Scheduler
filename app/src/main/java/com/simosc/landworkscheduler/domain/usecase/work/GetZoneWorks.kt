@@ -16,7 +16,7 @@ class GetZoneWorks @Inject constructor(
         return workRepository.getZoneWorks(zone.id).cancellable()
     }
 
-    operator fun invoke(zid: Long?): Flow<List<Work>> {
+    operator fun invoke(zid: Long): Flow<List<Work>> {
         return workRepository.getZoneWorks(zid).cancellable()
     }
 }

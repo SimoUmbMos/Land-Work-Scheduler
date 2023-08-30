@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 data class LocalWorkEntity(
     @PrimaryKey(autoGenerate = true) val id: Long,
     val lid: Long,
-    val zid: Long?,
+    val zid: Long,
     val title: String,
     val desc: String,
     val date: String,
