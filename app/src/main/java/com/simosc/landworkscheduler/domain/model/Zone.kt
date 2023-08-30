@@ -2,6 +2,7 @@ package com.simosc.landworkscheduler.domain.model
 
 import androidx.compose.ui.graphics.Color
 import com.google.android.gms.maps.model.LatLng
+import com.simosc.landworkscheduler.core.config.DefaultZoneColor
 
 data class Zone(
     val id: Long,
@@ -19,7 +20,7 @@ data class Zone(
             id = 0L,
             lid = lid,
             title = "",
-            color = Color(0xFFFF5722),
+            color = DefaultZoneColor,
             border = emptyList(),
             holes = emptyList()
         )

@@ -2,6 +2,7 @@ package com.simosc.landworkscheduler.domain.model
 
 import androidx.compose.ui.graphics.Color
 import com.google.android.gms.maps.model.LatLng
+import com.simosc.landworkscheduler.core.config.DefaultLandColor
 
 data class Land(
     val id: Long,
@@ -14,7 +15,7 @@ data class Land(
         fun emptyLand() = Land(
             id = 0L,
             title = "",
-            color = Color(0xFF8BC34A),
+            color = DefaultLandColor,
             border = emptyList(),
             holes = emptyList(),
         )

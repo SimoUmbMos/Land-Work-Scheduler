@@ -1,6 +1,7 @@
 package com.simosc.landworkscheduler.domain.extension
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 
 fun Color.invert() = copy(
@@ -8,6 +9,9 @@ fun Color.invert() = copy(
     green = 1.0f - green,
     blue = 1.0f - blue,
 )
+
+fun Color.readability(): Color =
+    if(luminance() > 0.179) Color.Black else Color.White
 
 fun Color.toArgbString(): String =
     Integer.toHexString(toArgb()).lowercase()

@@ -1,16 +1,23 @@
 package com.simosc.landworkscheduler.presentation.ui.components.dialogs
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.twotone.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +33,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.simosc.landworkscheduler.R
+import com.simosc.landworkscheduler.core.config.DefaultDialogColor
+import com.simosc.landworkscheduler.core.config.DefaultDialogColors
+import com.simosc.landworkscheduler.domain.extension.readability
 
 @Preview
 @Composable
@@ -35,7 +45,8 @@ private fun PreviewSimpleColorPickerDialog(){
 
 @Composable
 fun ColorPickerDialog(
-    initValue: Color = Color(0xFFD32F2F),
+    initValue: Color = DefaultDialogColor,
+    colorValues: List<Color> = DefaultDialogColors,
     runDismissOnSubmit: Boolean = false,
     onDismissDialog: () -> Unit = {},
     onSubmitPress: (Color) -> Unit,
@@ -43,200 +54,62 @@ fun ColorPickerDialog(
     var selectedColor by remember(initValue){
         mutableStateOf(initValue)
     }
+
     Dialog(
         onDismissRequest = onDismissDialog
     ) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(64.dp),
-                    shape = RoundedCornerShape(8.dp),
+                        .height(96.dp)
+                        .padding(bottom = 8.dp),
                     color = selectedColor,
-                    content = {}
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                ){}
+
+                LazyVerticalGrid (
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    columns = GridCells.FixedSize(54.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalArrangement = Arrangement.SpaceEvenly
                 ){
-                    Color(0xFFD32F2F).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFFE91E63).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFF9C27B0).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFF673AB7).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFF3F51B5).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
+                    items(colorValues){ color ->
+                        Box(
+                            modifier = Modifier.size(54.dp),
+                            contentAlignment = Alignment.Center
+                        ){
+                            IconButton(
+                                enabled = selectedColor != color,
+                                onClick = { selectedColor = color },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = color,
+                                    contentColor = color,
+                                    disabledContainerColor = color,
+                                    disabledContentColor = color.readability(),
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.TwoTone.Check,
+                                    contentDescription = null
+                                )
+                            }
+                        }
                     }
                 }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ){
-                    Color(0xFF2196F3).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFF00BCD4).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFF009688).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFF4CAF50).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFF8BC34A).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ){
-                    Color(0xFFCDDC39).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFFFFEB3B).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFFFFC107).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFFFF9800).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                    Color(0xFFFF5722).let{ color ->
-                        IconButton(
-                            colors = IconButtonDefaults
-                                .iconButtonColors(containerColor = color),
-                            onClick = {
-                                selectedColor = color
-                            },
-                            content = {}
-                        )
-                    }
-                }
+
                 Button(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp),
+                        .padding(8.dp),
                     onClick = {
                         onSubmitPress(selectedColor)
                         if(runDismissOnSubmit) onDismissDialog()

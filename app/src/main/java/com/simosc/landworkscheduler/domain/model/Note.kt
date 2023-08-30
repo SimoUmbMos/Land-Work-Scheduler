@@ -2,6 +2,7 @@ package com.simosc.landworkscheduler.domain.model
 
 import androidx.compose.ui.graphics.Color
 import com.google.android.gms.maps.model.LatLng
+import com.simosc.landworkscheduler.core.config.DefaultNoteColor
 import java.time.LocalDateTime
 
 data class Note(
@@ -24,7 +25,7 @@ data class Note(
             lid = lid,
             title = "",
             desc = "",
-            color = Color(0xFF3F51B5),
+            color = DefaultNoteColor,
             center = center,
             radius = 50.0,
             created = LocalDateTime.now(),

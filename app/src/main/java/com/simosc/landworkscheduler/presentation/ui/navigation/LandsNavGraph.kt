@@ -21,10 +21,6 @@ import com.simosc.landworkscheduler.domain.files.KmlFileExporter
 import com.simosc.landworkscheduler.presentation.activities.KmlReaderActivity
 import com.simosc.landworkscheduler.presentation.ui.screens.editorland.LandEditorScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.editorland.LandEditorViewModel
-import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandNoteEditorScreen
-import com.simosc.landworkscheduler.presentation.ui.screens.editorlandnote.LandNoteEditorViewModel
-import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuScreen
-import com.simosc.landworkscheduler.presentation.ui.screens.menulandnotes.LandNotesMenuViewModel
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuScreen
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuStates
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuViewModel
@@ -212,30 +208,7 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 }
             )
         ){
-            val viewModel = hiltViewModel<LandNotesMenuViewModel>()
-            val searchQuery by viewModel.searchQuery.collectAsState()
-            val isSearching by viewModel.isSearching.collectAsState()
-            val uiState by viewModel.uiState.collectAsState()
-            LandNotesMenuScreen(
-                uiState = uiState,
-                searchQuery = searchQuery,
-                isSearching = isSearching,
-                onBackPress = {
-                    navController.popBackStack()
-                },
-                onSearchChange = { newQuery ->
-                    viewModel.onSearchQueryUpdate(newQuery)
-                },
-                onNewNoteClick = { land ->
-                    TODO()
-                },
-                onNoteClick = { note ->
-                    TODO()
-                }
-            )
-            LaunchedEffect(Unit){
-                viewModel.setLandId(it.arguments!!.getLong("lid"))
-            }
+            TODO("Not yet implemented")
         }
 
         composable(
@@ -261,38 +234,7 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                 }
             )
         ){
-            val viewModel = hiltViewModel<LandNoteEditorViewModel>()
-            val uiState by viewModel.uiState.collectAsState()
-            val scope = rememberCoroutineScope()
-
-            LandNoteEditorScreen(
-                uiState = uiState,
-                onBackPress = navController::popBackStack,
-                onTitleUpdate = viewModel::onTitleUpdate,
-                onDescUpdate = viewModel::onDescUpdate,
-                onColorUpdate = viewModel::onColorUpdate,
-                onCenterUpdate = viewModel::onCenterUpdate,
-                onRadiusUpdate = viewModel::onRadiusUpdate,
-                onRevertChanges = viewModel::onRevertChanges,
-                onSaveNote = {
-                    scope.launch {
-                        if(viewModel.saveNote())
-                            navController.popBackStack()
-                    }
-                },
-                onDeleteNote = {
-                    scope.launch {
-                        viewModel.deleteNote()
-                        navController.popBackStack()
-                    }
-                }
-            )
-            LaunchedEffect(Unit){
-                viewModel.setDataIds(
-                    landId = it.arguments!!.getLong("lid"),
-                    noteId = it.arguments!!.getLong("nid")
-                )
-            }
+            TODO("Not yet implemented")
         }
 
         composable(
