@@ -19,7 +19,6 @@ import com.simosc.landworkscheduler.domain.usecase.location.GetLocation
 import com.simosc.landworkscheduler.domain.usecase.note.GetNotes
 import com.simosc.landworkscheduler.domain.usecase.zone.GetZones
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +31,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.plus
 import javax.inject.Inject
 
 @HiltViewModel
@@ -114,16 +114,6 @@ class LiveTrackingViewModel @Inject constructor(
         LiveTrackingStates.LoadingState
     )
 
-    override fun onCleared() {
-        super.onCleared()
-        stopDataUpdates()
-        stopLocationUpdates()
-    }
-
-    init {
-        startDataUpdates()
-    }
-
     fun onPermissionsResult(
         result: Map<String, @JvmSuppressWildcards Boolean>
     ) {
@@ -140,21 +130,21 @@ class LiveTrackingViewModel @Inject constructor(
         }
     }
 
-    private fun startDataUpdates(){
+    fun startDataUpdates(){
         stopDataUpdates()
 
         landsJob = getLandsUseCase()
             .onEach { lands ->
                 _lands.update { lands }
             }.launchIn(
-                scope = CoroutineScope(Dispatchers.IO)
+                scope = viewModelScope + Dispatchers.IO
             )
 
         zonesJob = getZonesUseCase()
             .onEach { zones ->
                 _zones.update { zones }
             }.launchIn(
-                scope = CoroutineScope(Dispatchers.IO)
+                scope = viewModelScope + Dispatchers.IO
             )
 
         notesJob = getNotesUseCase()
@@ -162,7 +152,7 @@ class LiveTrackingViewModel @Inject constructor(
                 _notes.update { notes }
             }
             .launchIn(
-                scope = CoroutineScope(Dispatchers.IO)
+                scope = viewModelScope + Dispatchers.IO
             )
     }
 

@@ -21,7 +21,6 @@ import com.simosc.landworkscheduler.domain.usecase.land.GetLand
 import com.simosc.landworkscheduler.domain.usecase.land.InsertLand
 import com.simosc.landworkscheduler.domain.usecase.location.getGeoLocationAddress
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -35,6 +34,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import javax.inject.Inject
 
 @HiltViewModel
@@ -109,7 +109,9 @@ class LandEditorViewModel @Inject constructor(
                             }
                         }
                     }
-                }.launchIn(CoroutineScope(Dispatchers.IO))
+                }.launchIn(
+                    scope = viewModelScope + Dispatchers.IO
+                )
             }else{
                 _selectedAddress.value?.let{ address ->
                     LatLng(address.latitude, address.longitude).let{ point ->
@@ -133,11 +135,6 @@ class LandEditorViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        stopSync()
     }
 
     val cameraPositionState: CameraPositionState

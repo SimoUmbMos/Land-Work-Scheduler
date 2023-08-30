@@ -108,6 +108,9 @@ fun NavGraphBuilder.trackingNavGraph(navController: NavController) {
                     lifecycleOwner.lifecycle.removeObserver(lifecycleEventObserver)
                 }
             }
+            LaunchedEffect(Unit){
+                viewModel.startDataUpdates()
+            }
         }
 
     }

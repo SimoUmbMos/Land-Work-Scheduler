@@ -87,9 +87,13 @@ fun NavGraphBuilder.landsNavGraph(navController: NavController) {
                     viewModel.onExportSelectedLands(ctx, createFileLauncher)
                 },
                 onRefreshData = {
-                    viewModel.refreshLands()
+                    viewModel.startSync()
                 }
             )
+
+             LaunchedEffect(Unit){
+                 viewModel.startSync()
+             }
         }
 
         composable(

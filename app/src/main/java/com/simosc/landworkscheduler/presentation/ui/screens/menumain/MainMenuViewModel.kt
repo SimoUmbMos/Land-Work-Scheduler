@@ -1,9 +1,9 @@
 package com.simosc.landworkscheduler.presentation.ui.screens.menumain
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.simosc.landworkscheduler.domain.usecase.work.GetDateWorksCount
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.plus
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -33,11 +34,6 @@ class MainMenuViewModel @Inject constructor(
         }
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        stopSync()
-    }
-
     fun loadData(){
         stopSync()
         mainJob = getDateWorksCountUseCase(
@@ -47,7 +43,7 @@ class MainMenuViewModel @Inject constructor(
                 MainMenuStates.Loaded(todayWorksCount = count)
             }
         }.launchIn(
-            CoroutineScope(Dispatchers.IO)
+            scope = viewModelScope + Dispatchers.IO
         )
     }
 }

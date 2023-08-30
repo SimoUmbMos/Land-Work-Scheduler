@@ -16,7 +16,6 @@ import com.simosc.landworkscheduler.domain.usecase.land.DeleteLand
 import com.simosc.landworkscheduler.domain.usecase.land.GetLands
 import com.simosc.landworkscheduler.presentation.ui.screens.menulands.LandsMenuActions.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -33,6 +32,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import java.io.File
 import java.io.OutputStream
 import java.time.LocalDateTime
@@ -150,15 +150,6 @@ class LandsMenuViewModel @Inject constructor(
         )
 
 
-    init{
-        startSync()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        stopSync()
-    }
-
     private fun stopSync(){
         mainJob?.let{
             it.cancel()
@@ -166,21 +157,17 @@ class LandsMenuViewModel @Inject constructor(
         }
     }
 
-    private fun startSync() {
+    fun startSync() {
         _isLoadingData.update { true }
+        stopSync()
         mainJob = getLandsUseCase()
             .onEach { lands ->
                 _lands.update { lands }
                 _isLoadingData.update { false }
             }
             .launchIn(
-                CoroutineScope(Dispatchers.IO)
+                scope = viewModelScope + Dispatchers.IO
             )
-    }
-
-    fun refreshLands(){
-        stopSync()
-        startSync()
     }
 
     fun toggleLand(land: Land) {
