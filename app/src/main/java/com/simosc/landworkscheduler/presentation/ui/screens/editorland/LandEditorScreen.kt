@@ -454,8 +454,8 @@ private fun LandEditorMap(
     val color = remember(uiState){
         when(uiState){
             is LandEditorStates.NeedLocation -> uiState.land.color
-            is LandEditorStates.NormalState -> uiState.newColor
-            is LandEditorStates.EditState -> uiState.newColor
+            is LandEditorStates.NormalState -> Color(uiState.newColor)
+            is LandEditorStates.EditState -> Color(uiState.newColor)
             else -> Land.emptyLand().color
         }
     }
@@ -603,7 +603,7 @@ private fun ShowDialogs(
             )
         is LandEditorStates.EditColorState ->
             ColorPickerDialog(
-                initValue = uiState.tempColor,
+                initValue = Color(uiState.tempColor),
                 onSubmitPress = onUpdateColor,
                 onDismissDialog = onCancelAction
             )

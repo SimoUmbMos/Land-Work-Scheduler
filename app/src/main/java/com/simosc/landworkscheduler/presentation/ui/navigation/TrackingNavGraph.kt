@@ -1,14 +1,17 @@
 package com.simosc.landworkscheduler.presentation.ui.navigation
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
@@ -38,8 +41,6 @@ fun NavGraphBuilder.trackingNavGraph(navController: NavController) {
             val userAzimuth by viewModel.userAzimuth.collectAsStateWithLifecycle()
 
             val context = LocalContext.current
-            val lifecycleOwner = LocalLifecycleOwner.current
-
             val launcher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions()
             ){ result ->
@@ -96,18 +97,32 @@ fun NavGraphBuilder.trackingNavGraph(navController: NavController) {
                         )
                     )
             }
+
+            val lifecycleOwner = LocalLifecycleOwner.current
             DisposableEffect(lifecycleOwner) {
                 val lifecycleEventObserver = LifecycleEventObserver { _, event ->
-                    if(event == Lifecycle.Event.ON_RESUME)
-                        viewModel.startLocationUpdates()
-                    else if(event == Lifecycle.Event.ON_PAUSE)
-                        viewModel.stopLocationUpdates()
+                    when(event){
+                        Lifecycle.Event.ON_RESUME -> viewModel.startLocationUpdates()
+                        Lifecycle.Event.ON_PAUSE -> viewModel.stopLocationUpdates()
+                        else -> {}
+                    }
                 }
                 lifecycleOwner.lifecycle.addObserver(lifecycleEventObserver)
                 onDispose {
                     lifecycleOwner.lifecycle.removeObserver(lifecycleEventObserver)
                 }
             }
+
+            @Suppress("DEPRECATION") val rotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                context.display?.rotation ?: -1
+            } else {
+                (context as Activity).windowManager.defaultDisplay.rotation
+            }
+            val configuration = LocalConfiguration.current
+            LaunchedEffect(configuration, rotation){
+                viewModel.setOrientation(configuration.orientation, rotation)
+            }
+
             LaunchedEffect(Unit){
                 viewModel.startDataUpdates()
             }

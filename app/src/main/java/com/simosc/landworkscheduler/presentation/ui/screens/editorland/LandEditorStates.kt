@@ -1,12 +1,16 @@
 package com.simosc.landworkscheduler.presentation.ui.screens.editorland
 
+import android.os.Parcelable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.google.android.gms.maps.model.LatLng
 import com.simosc.landworkscheduler.domain.extension.distanceTo
 import com.simosc.landworkscheduler.domain.model.Land
+import kotlinx.parcelize.Parcelize
 import kotlin.math.absoluteValue
 
-sealed class LandEditorStates{
+@Parcelize
+sealed class LandEditorStates: Parcelable{
 
     data object LoadingState: LandEditorStates()
 
@@ -21,14 +25,14 @@ sealed class LandEditorStates{
     class NormalState(
         val land: Land,
         val newTitle: String = land.title,
-        val newColor: Color = land.color.copy(),
+        val newColor: Int = land.color.copy().toArgb(),
         val newBorder: List<LatLng> = land.border.toList(),
         val newHoles: List<List<LatLng>> = land.holes.toList(),
     ): LandEditorStates(){
         fun needSave(): Boolean{
             return land != land.copy(
                 title = newTitle,
-                color = newColor,
+                color = Color(newColor),
                 border = newBorder,
                 holes = newHoles,
             )
@@ -82,23 +86,24 @@ sealed class LandEditorStates{
         }
     }
 
+    @Parcelize
     sealed class EditState(
-        val land: Land,
-        val newTitle: String = land.title,
-        val newColor: Color = land.color.copy(),
-        val newBorder: List<LatLng> = land.border.toList(),
-        val newHoles: List<List<LatLng>> = land.holes.toList(),
-    ): LandEditorStates(){
+        open val land: Land,
+        open val newTitle: String = land.title,
+        open val newColor: Int = land.color.copy().toArgb(),
+        open val newBorder: List<LatLng> = land.border.toList(),
+        open val newHoles: List<List<LatLng>> = land.holes.toList(),
+    ): LandEditorStates(),Parcelable{
         abstract fun submitEdit(): NormalState
         abstract fun cancelEdit(): NormalState
     }
 
     class AddPointState(
-        land: Land,
-        newTitle: String = land.title,
-        newColor: Color = land.color.copy(),
-        newBorder: List<LatLng> = land.border.toList(),
-        newHoles: List<List<LatLng>> = land.holes.toList(),
+        override val land: Land,
+        override val newTitle: String = land.title,
+        override val newColor: Int = land.color.copy().toArgb(),
+        override val newBorder: List<LatLng> = land.border.toList(),
+        override val newHoles: List<List<LatLng>> = land.holes.toList(),
         val tempBorder: List<LatLng> = newBorder.toList(),
     ): EditState(
         land = land,
@@ -142,11 +147,11 @@ sealed class LandEditorStates{
     }
 
     class AddBetweenPointState(
-        land: Land,
-        newTitle: String = land.title,
-        newColor: Color = land.color.copy(),
-        newBorder: List<LatLng> = land.border.toList(),
-        newHoles: List<List<LatLng>> = land.holes.toList(),
+        override val land: Land,
+        override val newTitle: String = land.title,
+        override val newColor: Int = land.color.copy().toArgb(),
+        override val newBorder: List<LatLng> = land.border.toList(),
+        override val newHoles: List<List<LatLng>> = land.holes.toList(),
         val tempBorder: List<LatLng> = newBorder.toList(),
         val startIndex: Int = -1,
         val endIndex: Int = -1,
@@ -282,11 +287,11 @@ sealed class LandEditorStates{
     }
 
     class DeletePointState(
-        land: Land,
-        newTitle: String = land.title,
-        newColor: Color = land.color.copy(),
-        newBorder: List<LatLng> = land.border.toList(),
-        newHoles: List<List<LatLng>> = land.holes.toList(),
+        override val land: Land,
+        override val newTitle: String = land.title,
+        override val newColor: Int = land.color.copy().toArgb(),
+        override val newBorder: List<LatLng> = land.border.toList(),
+        override val newHoles: List<List<LatLng>> = land.holes.toList(),
         val tempBorder: List<LatLng> = newBorder.toList(),
     ): EditState(
         land = land,
@@ -336,11 +341,11 @@ sealed class LandEditorStates{
     }
 
     class EditPointState(
-        land: Land,
-        newTitle: String = land.title,
-        newColor: Color = land.color.copy(),
-        newBorder: List<LatLng> = land.border.toList(),
-        newHoles: List<List<LatLng>> = land.holes.toList(),
+        override val land: Land,
+        override val newTitle: String = land.title,
+        override val newColor: Int = land.color.copy().toArgb(),
+        override val newBorder: List<LatLng> = land.border.toList(),
+        override val newHoles: List<List<LatLng>> = land.holes.toList(),
         val tempBorder: List<LatLng> = newBorder.toList(),
         val selectedIndex: Int = -1
     ): EditState(
@@ -404,11 +409,11 @@ sealed class LandEditorStates{
     }
 
     class EditTitleState(
-        land: Land,
-        newTitle: String = land.title,
-        newColor: Color = land.color.copy(),
-        newBorder: List<LatLng> = land.border.toList(),
-        newHoles: List<List<LatLng>> = land.holes.toList(),
+        override val land: Land,
+        override val newTitle: String = land.title,
+        override val newColor: Int = land.color.copy().toArgb(),
+        override val newBorder: List<LatLng> = land.border.toList(),
+        override val newHoles: List<List<LatLng>> = land.holes.toList(),
         val tempTitle: String = newTitle,
     ): EditState(
         land = land,
@@ -450,12 +455,12 @@ sealed class LandEditorStates{
     }
 
     class EditColorState(
-        land: Land,
-        newTitle: String = land.title,
-        newColor: Color = land.color.copy(),
-        newBorder: List<LatLng> = land.border.toList(),
-        newHoles: List<List<LatLng>> = land.holes.toList(),
-        val tempColor: Color = newColor.copy(),
+        override val land: Land,
+        override val newTitle: String = land.title,
+        override val newColor: Int = land.color.copy().toArgb(),
+        override val newBorder: List<LatLng> = land.border.toList(),
+        override val newHoles: List<List<LatLng>> = land.holes.toList(),
+        val tempColor: Int = newColor,
     ): EditState(
         land = land,
         newTitle = newTitle,
@@ -470,7 +475,7 @@ sealed class LandEditorStates{
                 newColor = newColor,
                 newBorder = newBorder,
                 newHoles = newHoles,
-                tempColor = color
+                tempColor = color.toArgb()
             )
         }
 

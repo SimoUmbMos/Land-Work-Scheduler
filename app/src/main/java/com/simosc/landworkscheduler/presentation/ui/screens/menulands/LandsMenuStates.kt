@@ -1,32 +1,37 @@
 package com.simosc.landworkscheduler.presentation.ui.screens.menulands
 
+import android.os.Parcelable
 import com.simosc.landworkscheduler.domain.model.Land
+import kotlinx.parcelize.Parcelize
 
-sealed class LandsMenuStates {
+@Parcelize
+sealed class LandsMenuStates: Parcelable {
     data object Loading: LandsMenuStates()
 
     sealed class Loaded(
-        val lands: List<Land>
+        open val lands: List<Land>
     ):LandsMenuStates()
 
+    @Parcelize
     class NormalState(
-        lands: List<Land>
+        override val lands: List<Land>
     ): Loaded(
         lands = lands
-    )
+    ), Parcelable
 
+    @Parcelize
     sealed class MultiSelectLands(
-        lands: List<Land>,
-        val selectedLands: List<Land>
+        override val lands: List<Land>,
+        open val selectedLands: List<Land>
     ): Loaded(
         lands
-    ){
+    ), Parcelable {
         abstract fun onToggleLand(land: Land): MultiSelectLands
     }
 
     class ExportLands(
-        lands: List<Land>,
-        selectedLands: List<Land> = emptyList()
+        override val lands: List<Land>,
+        override val selectedLands: List<Land> = emptyList()
     ): MultiSelectLands(
         lands = lands,
         selectedLands = selectedLands
@@ -43,8 +48,8 @@ sealed class LandsMenuStates {
     }
 
     class DeleteLands(
-        lands: List<Land>,
-        selectedLands: List<Land> = emptyList()
+        override val lands: List<Land>,
+        override val selectedLands: List<Land> = emptyList()
     ): MultiSelectLands(
         lands = lands,
         selectedLands = selectedLands

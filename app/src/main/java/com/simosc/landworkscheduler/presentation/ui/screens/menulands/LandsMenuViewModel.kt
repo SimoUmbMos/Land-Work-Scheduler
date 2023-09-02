@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simosc.landworkscheduler.R
@@ -20,17 +21,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import java.io.File
@@ -42,137 +40,144 @@ import javax.inject.Inject
 class LandsMenuViewModel @Inject constructor(
     private val getLandsUseCase: GetLands,
     private val getDeleteLandUseCase: DeleteLand,
-    private val generateKmlUseCase: GenerateKml
+    private val generateKmlUseCase: GenerateKml,
+    private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
     private var mainJob: Job? = null
 
-    private val _searchQuery = MutableStateFlow("")
     private val _error = MutableSharedFlow<Int?>()
-
-    private val _lands = MutableStateFlow<List<Land>?>(null)
-    private val _selectedLands = MutableStateFlow<List<Land>>(emptyList())
-    private val _selectedAction = MutableStateFlow(None)
-
-    private val _isLoadingData = MutableStateFlow(false)
-    private val _isLoadingAction = MutableStateFlow(false)
-    private val _isSearching = MutableStateFlow(false)
-
-
-    val searchQuery = _searchQuery.asStateFlow()
-    val isLoadingData = _isLoadingData.asStateFlow()
-    val isLoadingAction = _isLoadingAction.asStateFlow()
-    val isSearching = _isSearching.asStateFlow()
     val errorMessage = _error.asSharedFlow()
 
-    private val _currState: StateFlow<LandsMenuStates> =
-        combine(_lands,_selectedAction, _selectedLands){ lands, selectedAction, selectedLands ->
-            if(lands != null) {
-                when (selectedAction) {
-                    None -> LandsMenuStates.NormalState(
-                        lands = lands
-                    )
+    val searchQuery = savedStateHandle.getStateFlow(
+        "LandsMenuSearchQuery",
+        ""
+    )
 
-                    Export -> LandsMenuStates.ExportLands(
-                        lands = lands,
-                        selectedLands = selectedLands
-                    )
+    val isLoadingData = savedStateHandle.getStateFlow(
+        "LandsMenuIsLoadingData",
+        false
+    )
 
-                    Delete -> LandsMenuStates.DeleteLands(
-                        lands = lands,
-                        selectedLands = selectedLands
-                    )
-                }
-            } else {
-                LandsMenuStates.Loading
+    val isLoadingAction = savedStateHandle.getStateFlow(
+        "LandsMenuIsLoadingAction",
+        false
+    )
+
+    val isSearching = savedStateHandle.getStateFlow(
+        "LandsMenuIsSearching",
+        false
+    )
+
+    private val _lands = savedStateHandle.getStateFlow<List<Land>?>(
+        "LandsMenuLands",
+        null
+    )
+    private val _selectedLands = savedStateHandle.getStateFlow<List<Land>>(
+        "LandsMenuSelectedLands",
+        emptyList()
+    )
+    private val _selectedAction = savedStateHandle.getStateFlow(
+        "LandsMenuSelectedAction",
+        None
+    )
+
+    private val _currState: StateFlow<LandsMenuStates> = combine(
+        _lands,
+        _selectedAction,
+        _selectedLands
+    ){ lands, selectedAction, selectedLands ->
+        if(lands != null) {
+            when (selectedAction) {
+                None -> LandsMenuStates.NormalState(
+                    lands = lands
+                )
+
+                Export -> LandsMenuStates.ExportLands(
+                    lands = lands,
+                    selectedLands = selectedLands
+                )
+
+                Delete -> LandsMenuStates.DeleteLands(
+                    lands = lands,
+                    selectedLands = selectedLands
+                )
             }
-        }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000L),
+        } else {
             LandsMenuStates.Loading
-        )
-
-    @OptIn(FlowPreview::class)
-    val uiState: StateFlow<LandsMenuStates> = _searchQuery
-        .onEach {
-            _isSearching.update { true }
-        }
-        .debounce { query ->
-            if(query.isNotBlank())
-                DefaultSearchDebounce
-            else
-                0L
-        }
-        .combine(_currState){ query, currState ->
-            when(currState){
-                is LandsMenuStates.NormalState -> LandsMenuStates.NormalState(
-                    lands = currState.lands.filter {
-                        query.tokenizedSearchIn(
-                            "#${it.id} ${it.id}# ${it.title}"
-                        )
-                    }
-                )
-                is LandsMenuStates.DeleteLands -> LandsMenuStates.DeleteLands(
-                    lands = currState.lands.filter {
-                        query.tokenizedSearchIn(
-                            "#${it.id} ${it.id}# ${it.title}"
-                        )
-                    },
-                    selectedLands = currState.selectedLands.filter {
-                        query.tokenizedSearchIn(
-                            "#${it.id} ${it.id}# ${it.title}"
-                        )
-                    }
-                )
-                is LandsMenuStates.ExportLands -> LandsMenuStates.ExportLands(
-                    lands = currState.lands.filter {
-                        query.tokenizedSearchIn(
-                            "#${it.id} ${it.id}# ${it.title}"
-                        )
-                    },
-                    selectedLands = currState.selectedLands.filter {
-                        query.tokenizedSearchIn(
-                            "#${it.id} ${it.id}# ${it.title}"
-                        )
-                    }
-                )
-                else ->
-                    currState
-            }
-        }
-        .onEach {
-            _isSearching.update { false }
-        }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000L),
-            LandsMenuStates.Loading
-        )
-
-
-    private fun stopSync(){
-        mainJob?.let{
-            it.cancel()
-            mainJob = null
         }
     }
+    .stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000L),
+        LandsMenuStates.Loading
+    )
+
+    @OptIn(FlowPreview::class)
+    val uiState: StateFlow<LandsMenuStates> = searchQuery.onEach {
+        savedStateHandle["LandsMenuIsSearching"] = true
+    }.debounce { query ->
+        if(query.isNotBlank()) DefaultSearchDebounce else 0L
+    }.combine(
+        _currState
+    ){ query, currState ->
+        when(currState){
+
+            is LandsMenuStates.NormalState -> LandsMenuStates.NormalState(
+                lands = currState.lands.filter {
+                    query.tokenizedSearchIn(
+                        "#${it.id} ${it.id}# ${it.title}"
+                    )
+                }
+            )
+
+            is LandsMenuStates.DeleteLands -> LandsMenuStates.DeleteLands(
+                lands = currState.lands.filter {
+                    query.tokenizedSearchIn(
+                        "#${it.id} ${it.id}# ${it.title}"
+                    )
+                },
+                selectedLands = currState.selectedLands.filter {
+                    query.tokenizedSearchIn(
+                        "#${it.id} ${it.id}# ${it.title}"
+                    )
+                }
+            )
+
+            is LandsMenuStates.ExportLands -> LandsMenuStates.ExportLands(
+                lands = currState.lands.filter {
+                    query.tokenizedSearchIn(
+                        "#${it.id} ${it.id}# ${it.title}"
+                    )
+                },
+                selectedLands = currState.selectedLands.filter {
+                    query.tokenizedSearchIn(
+                        "#${it.id} ${it.id}# ${it.title}"
+                    )
+                }
+            )
+
+            else -> currState
+        }
+    }.onEach {
+        savedStateHandle["LandsMenuIsSearching"] = false
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000L),
+        LandsMenuStates.Loading
+    )
 
     fun startSync() {
-        _isLoadingData.update { true }
-        stopSync()
-        mainJob = getLandsUseCase()
-            .onEach { lands ->
-                _lands.update { lands }
-                _isLoadingData.update { false }
-            }
-            .launchIn(
-                scope = viewModelScope + Dispatchers.IO
-            )
+        savedStateHandle["LandsMenuIsLoadingData"] = true
+        mainJob?.cancel()
+        mainJob = getLandsUseCase().onEach { lands ->
+            savedStateHandle["LandsMenuLands"] = lands
+            savedStateHandle["LandsMenuIsLoadingData"] = false
+        }.launchIn( scope = viewModelScope + Dispatchers.IO )
     }
 
     fun toggleLand(land: Land) {
-        _selectedLands.update {
-            it.toMutableList().apply{
+        _selectedLands.value.let { selectedLands ->
+            savedStateHandle["LandsMenuSelectedLands"] = selectedLands.toMutableList().apply{
                 if(contains(land))
                     remove(land)
                 else
@@ -185,17 +190,17 @@ class LandsMenuViewModel @Inject constructor(
         uiState.value.let { state ->
             if(state is LandsMenuStates.DeleteLands) {
                 state.selectedLands.let{ selectedLands ->
-                    _isLoadingAction.update { true }
+                    savedStateHandle["LandsMenuIsLoadingAction"] = true
                     viewModelScope.launch(Dispatchers.IO){
                         selectedLands.forEach {
                             getDeleteLandUseCase(it)
                         }
-                        _lands.update {
-                            it?.toMutableList()?.apply {
+                        _lands.value.let { lands ->
+                            savedStateHandle["LandsMenuLands"] = lands?.toMutableList()?.apply {
                                 removeAll(selectedLands)
-                            }?.toList()
+                            }?.toList() ?: emptyList()
                         }
-                        _isLoadingAction.update { false }
+                        savedStateHandle["LandsMenuIsLoadingAction"] = false
                         changeAction(None)
                     }
                 }
@@ -204,16 +209,13 @@ class LandsMenuViewModel @Inject constructor(
     }
 
     fun changeAction(action: LandsMenuActions) {
-        _selectedLands.update { emptyList() }
-        _selectedAction.update { action }
+        savedStateHandle["LandsMenuSelectedLands"] = emptyList<Land>()
+        savedStateHandle["LandsMenuSelectedAction"] = action
     }
 
     fun onSearchChange(searchQuery: String) {
         searchQuery.replace("\\s+".toRegex()," ").let{ query ->
-            if(query.isNotBlank())
-                _searchQuery.update { query }
-            else
-                _searchQuery.update { "" }
+            savedStateHandle["LandsMenuSearchQuery"] = query.ifBlank { "" }
         }
     }
 
@@ -302,7 +304,7 @@ class LandsMenuViewModel @Inject constructor(
         uiState.value.let{ state ->
             if(state is LandsMenuStates.ExportLands){
                 state.selectedLands.let { selectedLands ->
-                    _isLoadingAction.update { true }
+                    savedStateHandle["LandsMenuIsLoadingAction"] = true
                     try{
                         if(generateKmlUseCase(selectedLands, outputStream)){
                             result = true
@@ -312,7 +314,7 @@ class LandsMenuViewModel @Inject constructor(
                     }catch (e: Exception){
                         _error.tryEmit(R.string.land_menu_error_cant_save_file)
                     }
-                    _isLoadingAction.update { false }
+                    savedStateHandle["LandsMenuIsLoadingAction"] = false
                 }
             }
         }

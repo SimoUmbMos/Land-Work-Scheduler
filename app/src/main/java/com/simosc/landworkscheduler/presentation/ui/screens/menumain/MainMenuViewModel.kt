@@ -1,47 +1,38 @@
 package com.simosc.landworkscheduler.presentation.ui.screens.menumain
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simosc.landworkscheduler.domain.usecase.work.GetDateWorksCount
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.plus
 import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class MainMenuViewModel @Inject constructor(
-    private val getDateWorksCountUseCase: GetDateWorksCount
+    private val getDateWorksCountUseCase: GetDateWorksCount,
+    private val savedStateHandle: SavedStateHandle
 ): ViewModel() {
     private var mainJob: Job? = null
 
-    private val _uiState: MutableStateFlow<MainMenuStates> =
-        MutableStateFlow(MainMenuStates.Loading)
-    val uiState: StateFlow<MainMenuStates> =
-        _uiState.asStateFlow()
-
-    private fun stopSync(){
-        mainJob?.let{
-            it.cancel()
-            mainJob = null
-        }
-    }
+    val uiState = savedStateHandle.getStateFlow<MainMenuStates>(
+        key = "MainMenuStates",
+        initialValue = MainMenuStates.Loading
+    )
 
     fun loadData(){
-        stopSync()
+        mainJob?.cancel()
         mainJob = getDateWorksCountUseCase(
             LocalDate.now()
-        ).onEach { count ->
-            _uiState.update {
-                MainMenuStates.Loaded(todayWorksCount = count)
-            }
+        ).onEach { todayWorksCount ->
+            savedStateHandle["MainMenuStates"] = MainMenuStates.Loaded(
+                todayWorksCount = todayWorksCount
+            )
         }.launchIn(
             scope = viewModelScope + Dispatchers.IO
         )

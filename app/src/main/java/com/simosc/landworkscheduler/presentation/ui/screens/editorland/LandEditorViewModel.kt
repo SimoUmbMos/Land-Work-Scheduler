@@ -3,6 +3,8 @@ package com.simosc.landworkscheduler.presentation.ui.screens.editorland
 import android.location.Address
 import android.util.Log
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -25,159 +27,164 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
 class LandEditorViewModel @Inject constructor(
     private val getLand: GetLand,
     private val insertLand: InsertLand,
-    private val getGeoLocationAddress: GetGeoLocationAddress
+    private val getGeoLocationAddress: GetGeoLocationAddress,
+    private val savedStateHandle: SavedStateHandle
 ):ViewModel() {
     private var syncJob: Job? = null
 
-    private val _cameraPositionState: CameraPositionState = CameraPositionState(
+    val cameraPositionState: CameraPositionState = CameraPositionState(
         position = CameraPosition.fromLatLngZoom(
             DefaultMapTarget,
             DefaultMapZoom
         )
     )
 
-    private val _selectedAddress: MutableStateFlow<Address?> =
-        MutableStateFlow(null)
-    private val _selectedId: MutableStateFlow<Long> =
-        MutableStateFlow(0L)
-    private val _error: MutableSharedFlow<Int?> =
-        MutableSharedFlow()
-    private val _uiState: MutableStateFlow<LandEditorStates> =
-        MutableStateFlow(LandEditorStates.LoadingState)
+    private val _error: MutableSharedFlow<Int?> = MutableSharedFlow()
+    val error: SharedFlow<Int?> = _error.asSharedFlow()
 
-    private fun stopSync() {
-        syncJob?.let{
-            it.cancel()
-            syncJob = null
-        }
-    }
+    private val _selectedAddress = savedStateHandle.getStateFlow<Address?>(
+        "LandEditorSelectedAddress",
+        null
+    )
 
-    private fun syncData() {
-        stopSync()
-        _selectedId.value.let { selectedId ->
-            if(selectedId > 0L) {
-                syncJob = getLand(selectedId).onEach { land ->
-                    land?.let {
-                        _uiState.update {
-                            LandEditorStates.NormalState(land = land)
-                        }
-                        land.border.toLatLngBounds()?.let{ bounds ->
-                            viewModelScope.launch(Dispatchers.Main){
-                                cameraPositionState.move(
-                                    CameraUpdateFactory.newLatLngBounds(
-                                        bounds,
-                                        128
-                                    )
-                                )
-                            }
-                        }
-                    }?:run{
-                        _selectedAddress.value?.let{ address ->
-                            LatLng(address.latitude, address.longitude).let{ point ->
-                                viewModelScope.launch(Dispatchers.Main) {
-                                    cameraPositionState.move(
-                                        CameraUpdateFactory.newLatLng(point)
-                                    )
-                                }
-                            }
-                            _uiState.update{
-                                LandEditorStates.NormalState(
-                                    land = Land.emptyLand().copy(id = selectedId)
-                                )
-                            }
-                        }?:run{
-                            _uiState.update{
-                                LandEditorStates.NeedLocation(
-                                    land = Land.emptyLand().copy(id = selectedId)
-                                )
-                            }
-                        }
-                    }
-                }.launchIn(
-                    scope = viewModelScope + Dispatchers.IO
-                )
-            }else{
-                _selectedAddress.value?.let{ address ->
-                    LatLng(address.latitude, address.longitude).let{ point ->
-                        viewModelScope.launch(Dispatchers.Main) {
+    private val _selectedId = savedStateHandle.getStateFlow(
+        "LandEditorSelectedId",
+        0L
+    )
+
+    val uiState = savedStateHandle.getStateFlow<LandEditorStates>(
+        "LandEditorUiStates",
+        LandEditorStates.LoadingState
+    )
+
+    private fun syncData(landId: Long) {
+        syncJob?.cancel()
+        if(landId > 0L) {
+            syncJob = getLand(landId).onEach { land ->
+                val bounds = land?.border?.toLatLngBounds()
+                val address = _selectedAddress.value
+                when{
+
+                    bounds != null -> {
+                        viewModelScope.launch(Dispatchers.Main){
                             cameraPositionState.move(
-                                CameraUpdateFactory.newLatLng(point)
+                                CameraUpdateFactory.newLatLngBounds(
+                                    bounds,
+                                    128
+                                )
                             )
                         }
+                        savedStateHandle["LandEditorSelectedAddress"] =
+                            Address(Locale.getDefault()).apply {
+                                latitude = bounds.center.latitude
+                                longitude = bounds.center.longitude
+                            }
+                        savedStateHandle["LandEditorUiStates"] =
+                            LandEditorStates.NormalState(
+                                land = land
+                            )
                     }
-                    _uiState.update{
-                        LandEditorStates.NormalState(
-                            land = Land.emptyLand()
-                        )
+
+                    address != null -> {
+                        LatLng(address.latitude, address.longitude).let{ point ->
+                            viewModelScope.launch(Dispatchers.Main) {
+                                cameraPositionState.move(
+                                    CameraUpdateFactory.newLatLng(point)
+                                )
+                            }
+                        }
+                        savedStateHandle["LandEditorUiStates"] =
+                            LandEditorStates.NormalState(
+                                land = land ?: Land.emptyLand().copy(id = landId)
+                            )
                     }
-                }?:run{
-                    _uiState.update{
-                        LandEditorStates.NeedLocation(
-                            land = Land.emptyLand()
+
+                    else -> {
+                        savedStateHandle["LandEditorUiStates"] =
+                            LandEditorStates.NeedLocation(
+                                land = land ?: Land.emptyLand().copy(id = landId)
+                            )
+                    }
+                }
+            }.launchIn(
+                scope = viewModelScope + Dispatchers.IO
+            )
+        }else{
+            val address = _selectedAddress.value
+            if(address != null){
+                LatLng(address.latitude, address.longitude).let{ point ->
+                    viewModelScope.launch(Dispatchers.Main) {
+                        cameraPositionState.move(
+                            CameraUpdateFactory.newLatLng(point)
                         )
                     }
                 }
+                savedStateHandle["LandEditorUiStates"] =
+                    LandEditorStates.NormalState(
+                        land = Land.emptyLand()
+                    )
+            }else{
+                savedStateHandle["LandEditorUiStates"] =
+                    LandEditorStates.NeedLocation(
+                        land = Land.emptyLand()
+                    )
             }
         }
     }
 
-    val cameraPositionState: CameraPositionState
-        get() = _cameraPositionState
-    val error: SharedFlow<Int?>
-        get() = _error.asSharedFlow()
-    val uiState: StateFlow<LandEditorStates>
-        get() = _uiState.asStateFlow()
-
-    fun setSelectedId(id: Long){
-        _selectedId.update {
-            if(id > 0L)
-                id
-            else
-                0L
+    fun setSelectedId(landId: Long){
+        if(landId > 0L){
+            savedStateHandle["LandEditorSelectedId"] = landId
+            syncData(landId)
+        }else{
+            savedStateHandle["LandEditorSelectedId"] = 0L
+            syncData(0L)
         }
-        syncData()
     }
 
     fun setAction(action: LandEditorActions){
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             if(state is LandEditorStates.NormalState){
-                _uiState.update { state.toEditState(action) }
+                savedStateHandle["LandEditorUiStates"] =
+                    state.toEditState(action)
             }else if(state is LandEditorStates.EditState){
-                _uiState.update { state.submitEdit().toEditState(action) }
+                savedStateHandle["LandEditorUiStates"] =
+                    state.submitEdit().toEditState(action)
             }
         }
     }
 
     fun onMapClick(point: LatLng){
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             when(state){
                 is LandEditorStates.AddPointState -> {
-                    _uiState.update { state.performAction(point) }
+                    savedStateHandle["LandEditorUiStates"] =
+                        state.performAction(point)
                 }
                 is LandEditorStates.AddBetweenPointState -> {
-                    _uiState.update { state.performAction(point) }
+                    savedStateHandle["LandEditorUiStates"] =
+                        state.performAction(point)
                 }
                 is LandEditorStates.DeletePointState -> {
-                    _uiState.update { state.performAction(point) }
+                    savedStateHandle["LandEditorUiStates"] =
+                        state.performAction(point)
                 }
                 is LandEditorStates.EditPointState -> {
-                    _uiState.update { state.performAction(point) }
+                    savedStateHandle["LandEditorUiStates"] =
+                        state.performAction(point)
                 }
                 else -> {}
             }
@@ -186,46 +193,52 @@ class LandEditorViewModel @Inject constructor(
 
     fun setLandTitleAndAddress(title: String, address: String) = viewModelScope.launch{
         title.trimWithSingleWhitespaces().let{ newTitle ->
-            if(newTitle.isNotBlank()){
-                _uiState.update {
-                    when(it){
-                        is LandEditorStates.NeedLocation ->
+            uiState.value.let{ state ->
+                when(state){
+                    is LandEditorStates.NeedLocation ->
+                        savedStateHandle["LandEditorUiStates"] =
                             LandEditorStates.NeedLocation(
-                                it.land.copy(title = newTitle)
+                                state.land.copy(title = newTitle)
                             )
 
-                        is LandEditorStates.NormalState ->
+                    is LandEditorStates.NormalState ->
+                        savedStateHandle["LandEditorUiStates"] =
                             LandEditorStates.NormalState(
-                                land = it.land,
+                                land = state.land,
                                 newTitle = newTitle
                             )
 
-                        else ->
-                            it
-                    }
+                    else ->
+                        savedStateHandle["LandEditorUiStates"] =
+                            state
                 }
             }
         }
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             if (state is LandEditorStates.NeedLocation && address.isNotBlank()) {
-                _uiState.update { LandEditorStates.LoadingState }
+
+                savedStateHandle["LandEditorUiStates"] =
+                    LandEditorStates.LoadingState
+
                 getGeoLocationAddress(address).let { addressList ->
                     Log.d("TAG", "getGeoLocationAddress: $addressList")
                     addressList.firstOrNull {
                         it.hasLatitude() && it.hasLatitude()
-                    }?.let { result ->
-                        _selectedAddress.update { result }
-                        LatLng(result.latitude, result.longitude).let{ point ->
+                    }?.let { address ->
+                        savedStateHandle["LandEditorSelectedAddress"] = address
+                        LatLng(address.latitude, address.longitude).let{ point ->
                             viewModelScope.launch(Dispatchers.Main) {
                                 cameraPositionState.move(
                                     CameraUpdateFactory.newLatLng(point)
                                 )
                             }
                         }
-                        _uiState.update { state.toNormalState() }
+                        savedStateHandle["LandEditorUiStates"] =
+                            state.toNormalState()
                     } ?: run {
                         _error.tryEmit(R.string.land_editor_error_land_address_is_not_found)
-                        _uiState.update { state }
+                        savedStateHandle["LandEditorUiStates"] =
+                            state
                     }
                 }
             }
@@ -233,39 +246,41 @@ class LandEditorViewModel @Inject constructor(
     }
 
     fun onUpdateTitle(title: String){
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             if(state is LandEditorStates.EditTitleState) {
-                _uiState.update {
+                savedStateHandle["LandEditorUiStates"] =
                     state.performAction(title.trimWithSingleWhitespaces()).submitEdit()
-                }
             }
         }
     }
 
     fun onUpdateColor(color: Color){
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             if(state is LandEditorStates.EditColorState)
-                _uiState.update { state.performAction(color).submitEdit() }
+                savedStateHandle["LandEditorUiStates"] =
+                    state.performAction(color).submitEdit()
         }
     }
 
     fun onSubmitAction(){
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             if(state is LandEditorStates.EditState)
-                _uiState.update { state.submitEdit() }
+                savedStateHandle["LandEditorUiStates"] =
+                    state.submitEdit()
         }
     }
 
     fun onCancelAction(){
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             if(state is LandEditorStates.EditState)
-                _uiState.update { state.cancelEdit() }
+                savedStateHandle["LandEditorUiStates"] =
+                    state.cancelEdit()
         }
     }
 
     suspend fun onSaveLand(): Boolean{
         var tempState: LandEditorStates.NormalState? = null
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             if(state is LandEditorStates.NormalState){
                 tempState = state
             }else if(state is LandEditorStates.EditState){
@@ -278,7 +293,7 @@ class LandEditorViewModel @Inject constructor(
                     insertLand(
                         state.land.copy(
                             title = state.newTitle,
-                            color = state.newColor,
+                            color = Color(state.newColor),
                             border = state.newBorder,
                             holes = state.newHoles
                         )
@@ -304,11 +319,13 @@ class LandEditorViewModel @Inject constructor(
     }
 
     fun onResetAction(){
-        _uiState.value.let { state ->
+        uiState.value.let { state ->
             if(state is LandEditorStates.NormalState) {
-                _uiState.update { LandEditorStates.NormalState(land = state.land) }
+                savedStateHandle["LandEditorUiStates"] =
+                    LandEditorStates.NormalState(land = state.land)
             }else if(state is LandEditorStates.EditState){
-                _uiState.update { LandEditorStates.NormalState(land = state.land) }
+                savedStateHandle["LandEditorUiStates"] =
+                    LandEditorStates.NormalState(land = state.land)
             }
         }
     }
@@ -325,7 +342,7 @@ class LandEditorViewModel @Inject constructor(
             }
         }
 
-        val originalLand = _uiState.value.let { state ->
+        val originalLand = uiState.value.let { state ->
             when(state){
                 is LandEditorStates.NeedLocation ->
                     state.land
@@ -347,15 +364,14 @@ class LandEditorViewModel @Inject constructor(
             }
         }
 
-        _uiState.update {
+        savedStateHandle["LandEditorUiStates"] =
             LandEditorStates.NormalState(
                 land = originalLand,
                 newTitle = land.title,
-                newColor = land.color,
+                newColor = land.color.toArgb(),
                 newBorder = land.border,
                 newHoles = land.holes
             )
-        }
     }
 }
 

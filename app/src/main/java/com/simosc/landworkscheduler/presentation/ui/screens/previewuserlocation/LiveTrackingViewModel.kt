@@ -1,15 +1,16 @@
 package com.simosc.landworkscheduler.presentation.ui.screens.previewuserlocation
 
 import android.Manifest
+import android.content.res.Configuration
 import android.location.Location
+import android.view.Surface
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simosc.landworkscheduler.domain.enums.LocationPermission
 import com.simosc.landworkscheduler.domain.enums.LocationStatues
 import com.simosc.landworkscheduler.domain.exception.LocationPermissionException
 import com.simosc.landworkscheduler.domain.exception.LocationProviderException
-import com.simosc.landworkscheduler.domain.exception.NoAccelerometerSensorException
-import com.simosc.landworkscheduler.domain.exception.NoMagnetometerSensorException
 import com.simosc.landworkscheduler.domain.model.Land
 import com.simosc.landworkscheduler.domain.model.Note
 import com.simosc.landworkscheduler.domain.model.Zone
@@ -21,16 +22,13 @@ import com.simosc.landworkscheduler.domain.usecase.zone.GetZones
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.plus
 import javax.inject.Inject
 
@@ -40,7 +38,8 @@ class LiveTrackingViewModel @Inject constructor(
     private val getZonesUseCase: GetZones,
     private val getNotesUseCase: GetNotes,
     private val getLocationUseCase: GetLocation,
-    private val getAzimuthUseCase: GetAzimuth
+    private val getAzimuthUseCase: GetAzimuth,
+    private val savedStateHandle: SavedStateHandle
 ):ViewModel() {
 
     private var locationJob: Job? = null
@@ -50,30 +49,61 @@ class LiveTrackingViewModel @Inject constructor(
     private var zonesJob: Job? = null
     private var notesJob: Job? = null
 
-    private val _lands: MutableStateFlow<List<Land>> =
-        MutableStateFlow(emptyList())
+    private val _locationPermission = savedStateHandle.getStateFlow(
+        "LiveTrackingLocationPermission",
+        LocationPermission.None
+    )
 
-    private val _zones: MutableStateFlow<List<Zone>> =
-        MutableStateFlow(emptyList())
+    val userLocation = savedStateHandle.getStateFlow<Location?>(
+        "LiveTrackingUserLocation",
+        null
+    )
 
-    private val _notes: MutableStateFlow<List<Note>> =
-        MutableStateFlow(emptyList())
+    private val _rawAzimuth = savedStateHandle.getStateFlow<Float?>(
+        "LiveTrackingRawAzimuth",
+        null
+    )
 
-    private val _userLocationStatus: MutableStateFlow<LocationStatues> =
-        MutableStateFlow(LocationStatues.Waiting)
+    private val _displayOrientation = savedStateHandle.getStateFlow<Float?>(
+        "LiveTrackingDisplayOrientation",
+        null
+    )
 
-    private val _locationPermission: MutableStateFlow<LocationPermission> =
-        MutableStateFlow(LocationPermission.None)
+    val userAzimuth = _rawAzimuth.combine(
+        _displayOrientation
+    ){ rawAzimuth, displayOrientation ->
+        if(rawAzimuth != null && displayOrientation != null)
+            (rawAzimuth - displayOrientation).let{ azimuth ->
+                when{
+                    azimuth > 180f -> azimuth - 360f
+                    azimuth < -180.0f -> azimuth + 360f
+                    else -> azimuth
+                }
+            }
+        else
+            null
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000L),
+        null
+    )
 
-    private val _userLocation: MutableStateFlow<Location?> =
-        MutableStateFlow(null)
-    val userLocation: StateFlow<Location?> =
-        _userLocation.asStateFlow()
-
-    private val _userAzimuth: MutableStateFlow<Float?> =
-        MutableStateFlow(null)
-    val userAzimuth: StateFlow<Float?> =
-        _userAzimuth.asStateFlow()
+    private val _lands = savedStateHandle.getStateFlow<List<Land>>(
+        "LiveTrackingLands",
+        emptyList()
+    )
+    private val _zones = savedStateHandle.getStateFlow<List<Zone>>(
+        "LiveTrackingZones",
+        emptyList()
+    )
+    private val _notes = savedStateHandle.getStateFlow<List<Note>>(
+        "LiveTrackingNotes",
+        emptyList()
+    )
+    private val _userLocationStatus = savedStateHandle.getStateFlow(
+        "LiveTrackingLocationStatues",
+        LocationStatues.Waiting
+    )
 
     val uiState: StateFlow<LiveTrackingStates> = combine(
         _lands, _zones, _notes, _userLocationStatus
@@ -97,7 +127,7 @@ class LiveTrackingViewModel @Inject constructor(
                 LiveTrackingStates.LoadingState
         }
     }.combine(
-        _userLocation
+        userLocation
     ){ currentUiState, userLocation ->
         if(
             currentUiState is LiveTrackingStates.ReadyState.WaitingUserLocationState &&
@@ -114,134 +144,95 @@ class LiveTrackingViewModel @Inject constructor(
         LiveTrackingStates.LoadingState
     )
 
-    fun onPermissionsResult(
-        result: Map<String, @JvmSuppressWildcards Boolean>
-    ) {
-        when{
-            result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION,false) -> {
-                _locationPermission.update { LocationPermission.Fine }
-            }
-            result.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION,false) -> {
-                _locationPermission.update { LocationPermission.Coarse }
-            }
-            else -> {
-                _locationPermission.update { LocationPermission.None }
-            }
+    fun onPermissionsResult(result: Map<String, @JvmSuppressWildcards Boolean>) {
+        savedStateHandle["LiveTrackingLocationPermission"] = when{
+            result.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION,false) ->
+                LocationPermission.Fine
+            result.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION,false) ->
+                LocationPermission.Coarse
+            else ->
+                LocationPermission.None
         }
     }
 
     fun startDataUpdates(){
-        stopDataUpdates()
-
+        landsJob?.cancel()
         landsJob = getLandsUseCase()
             .onEach { lands ->
-                _lands.update { lands }
+                savedStateHandle["LiveTrackingLands"] = lands
             }.launchIn(
                 scope = viewModelScope + Dispatchers.IO
             )
 
+        zonesJob?.cancel()
         zonesJob = getZonesUseCase()
             .onEach { zones ->
-                _zones.update { zones }
+                savedStateHandle["LiveTrackingZones"] = zones
             }.launchIn(
                 scope = viewModelScope + Dispatchers.IO
             )
 
+        notesJob?.cancel()
         notesJob = getNotesUseCase()
             .onEach { notes ->
-                _notes.update { notes }
+                savedStateHandle["LiveTrackingNotes"] = notes
             }
             .launchIn(
                 scope = viewModelScope + Dispatchers.IO
             )
     }
 
-    private fun stopDataUpdates(){
-        landsJob?.let{
-            it.cancel()
-            landsJob = null
-        }
-        zonesJob?.let{
-            it.cancel()
-            zonesJob = null
-        }
-        notesJob?.let{
-            it.cancel()
-            notesJob = null
-        }
-    }
-
     fun startLocationUpdates() {
-        stopLocationUpdates()
         if(_locationPermission.value != LocationPermission.None){
+            locationJob?.cancel()
             locationJob = getLocationUseCase().catch { e ->
-                when(e){
-                    is LocationPermissionException -> {
-                        _userLocationStatus.update {
-                            LocationStatues.NeedPermission
-                        }
-                    }
-                    is LocationProviderException -> {
-                        _userLocationStatus.update {
-                            LocationStatues.NeedProvider
-                        }
-                    }
-                    else -> {
-                        _userLocationStatus.update {
-                            LocationStatues.Error
-                        }
-                    }
+                savedStateHandle["LiveTrackingLocationStatues"] = when(e){
+                    is LocationPermissionException ->
+                        LocationStatues.NeedPermission
+                    is LocationProviderException ->
+                        LocationStatues.NeedProvider
+                    else ->
+                        LocationStatues.Error
                 }
             }.onEach{ location ->
-                _userLocationStatus.update {
+                savedStateHandle["LiveTrackingLocationStatues"] =
                     LocationStatues.Ready
-                }
-                _userLocation.update {
+                savedStateHandle["LiveTrackingUserLocation"] =
                     location
-                }
             }.launchIn(
                 scope = viewModelScope
             )
 
-            azimuthJob = getAzimuthUseCase().catch{e ->
-                when(e){
-                    is NoMagnetometerSensorException ->
-                        _userAzimuth.update {
-                            null
-                        }
-                    is NoAccelerometerSensorException ->
-                        _userAzimuth.update {
-                            null
-                        }
-                    else ->
-                        _userAzimuth.update {
-                            null
-                        }
-                }
+            azimuthJob?.cancel()
+            azimuthJob = getAzimuthUseCase().catch{
+                savedStateHandle["LiveTrackingRawAzimuth"] = null
             }.onEach { azimuth ->
-                _userAzimuth.update {
-                    azimuth
-                }
+                savedStateHandle["LiveTrackingRawAzimuth"] = azimuth
             }.launchIn(
                 scope = viewModelScope
             )
         }
     }
 
-    fun stopLocationUpdates(){
-        locationJob?.let{
-            it.cancel()
-            locationJob = null
-        }
-        azimuthJob?.let {
-            it.cancel()
-            azimuthJob = null
-        }
+    fun stopLocationUpdates() {
+        locationJob?.cancel()
+        azimuthJob?.cancel()
     }
 
     fun setLoadingState() {
-        _userLocationStatus.update {
+        savedStateHandle["LiveTrackingLocationStatues"] =
             LocationStatues.Waiting
+    }
+
+    fun setOrientation(orientation: Int, rotation: Int) {
+        if(orientation == Configuration.ORIENTATION_LANDSCAPE){
+            if(rotation == Surface.ROTATION_90){
+                savedStateHandle["LiveTrackingDisplayOrientation"] = -90f
+            }else if(rotation == Surface.ROTATION_270){
+                savedStateHandle["LiveTrackingDisplayOrientation"] = 90f
+            }
+        }else if(orientation == Configuration.ORIENTATION_PORTRAIT){
+            savedStateHandle["LiveTrackingDisplayOrientation"] = 0f
         }
     }
 
