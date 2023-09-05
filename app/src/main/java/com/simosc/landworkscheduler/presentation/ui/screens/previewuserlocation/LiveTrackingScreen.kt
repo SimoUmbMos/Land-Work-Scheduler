@@ -216,10 +216,13 @@ private fun UserLocationMap(
     var isMapLoaded by remember {
         mutableStateOf(false)
     }
+    var zoomControlsEnabled by remember{
+        mutableStateOf(true)
+    }
     val cameraPositionState: CameraPositionState = rememberCameraPositionState{
         position = CameraPosition.builder().let {
+            it.zoom(16f)
             it.target(userLocation.toLatLng())
-            it.zoom(17f)
             it.bearing(userAzimuth ?: userLocation.bearing)
             it.build()
         }
@@ -227,64 +230,49 @@ private fun UserLocationMap(
     val markerState: MarkerState = rememberMarkerState(
         position = userLocation.toLatLng()
     )
-
-    LaunchedEffect(userAzimuth){
-        userAzimuth?.let{ azimuth ->
-            if(!cameraPositionState.isMoving && isMapLoaded) {
+    LaunchedEffect(cameraPositionState.isMoving){
+        zoomControlsEnabled = !cameraPositionState.isMoving
+    }
+    LaunchedEffect(userLocation, userAzimuth){
+        userLocation.toLatLng().let{ userPosition ->
+            if(markerState.position != userPosition)
+                markerState.position = userPosition
+            if(isMapLoaded && !cameraPositionState.isMoving)
                 cameraPositionState.animate(
                     update = CameraUpdateFactory.newCameraPosition(
                         CameraPosition.builder().let {
-                            it.target(cameraPositionState.position.target)
-                            it.tilt(cameraPositionState.position.tilt)
                             it.zoom(cameraPositionState.position.zoom)
-                            it.bearing(azimuth)
+                            it.target(userPosition)
+                            it.bearing(userAzimuth ?: userLocation.bearing)
                             it.build()
                         }
                     )
                 )
-            }
         }
     }
 
-    LaunchedEffect(userLocation){
-        userLocation.let { location ->
-            userAzimuth.let{ azimuth ->
-                markerState.position = location.toLatLng()
-                if(isMapLoaded) {
-                    cameraPositionState.animate(
-                        update = CameraUpdateFactory.newCameraPosition(
-                            CameraPosition.builder().let {
-                                it.target(location.toLatLng())
-                                it.tilt(cameraPositionState.position.tilt)
-                                it.zoom(cameraPositionState.position.zoom)
-                                it.bearing(azimuth ?: location.bearing)
-                                it.build()
-                            }
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    val uiSettings = remember{
+    val uiSettings = remember(zoomControlsEnabled){
         MapUiSettings(
             compassEnabled = false,
+            indoorLevelPickerEnabled = false,
             mapToolbarEnabled = false,
+            myLocationButtonEnabled = false,
             rotationGesturesEnabled = false,
             scrollGesturesEnabled = false,
             scrollGesturesEnabledDuringRotateOrZoom = false,
             tiltGesturesEnabled = false,
-            zoomGesturesEnabled = false,
+            zoomControlsEnabled = zoomControlsEnabled,
+            zoomGesturesEnabled = false
         )
     }
-
     val properties = remember{
         MapProperties(
             isBuildingEnabled = false,
             isIndoorEnabled = false,
             isTrafficEnabled = false,
-            mapType = MapType.SATELLITE
+            mapType = MapType.SATELLITE,
+            maxZoomPreference = 18f,
+            minZoomPreference = 14f
         )
     }
 
