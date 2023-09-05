@@ -24,8 +24,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -305,6 +307,7 @@ private fun LandPreviewScreenContent(
         )
     }
 
+    val zoomPadding = with(LocalDensity.current){32.dp.toPx()}.toInt()
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
@@ -315,7 +318,7 @@ private fun LandPreviewScreenContent(
                 cameraPositionState.move(
                     CameraUpdateFactory.newLatLngBounds(
                         bounds,
-                        32
+                        zoomPadding
                     )
                 )
                 if (mapStyle != MapType.SATELLITE) {
